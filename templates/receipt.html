@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt #{{ order.order_number }}</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 80mm;
+            margin: 0 auto;
+            padding: 5mm;
+            font-size: 12px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .info {
+            margin-bottom: 10px;
+        }
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 10px;
+        }
+        @media print {
+            @page {
+                margin: 0;
+                size: 80mm 200mm;
+            }
+            body {
+                padding: 5mm;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">TOKYO TOKYO</div>
+        <div>Japanese Food Fast</div>
+        <div>123 Main Street, Anytown</div>
+        <div>Tel: 123-456-7890</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="info">
+        <div>Receipt #: {{ order.order_number }}</div>
+        <div>Date: {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+        <div>Cashier: {{ order.staff.name }}</div>
+        <div>Order Type: {{ order.order_type.upper() }}</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th class="text-left">Item</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">{{ "%.2f"|format(item.price) }}</td>
+                <td class="text-right">{{ "%.2f"|format(item.price * item.quantity) }}</td>
+            </tr>
+            {% if item.notes %}
+            <tr>
+                <td colspan="4">Note: {{ item.notes }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="divider"></div>
+    
+    <table>
+        <tr>
+            <td>Subtotal:</td>
+            <td class="text-right">₱{{ "%.2f"|format(order.total_amount / 1.12) }}</td>
+        </tr>
+        <tr>
+            <td>Tax (12%):</td>
+            <td class="text-right">₱{{ "%.2f"|format(order.total_amount - (order.total_amount / 1.12)) }}</td>
+        </tr>
+        <tr>
+            <td><strong>TOTAL:</strong></td>
+            <td class="text-right"><strong>₱{{ "%.2f"|format(order.total_amount) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Payment Method:</td>
+            <td class="text-right">{{ order.payment_method }}</td>
+        </tr>
+    </table>
+    
+    {% if order.customer %}
+    <div class="divider"></div>
+    <div class="text-center">
+        <p>Customer: {{ order.customer.name }}</p>
+        <p>Rewards Points: {{ order.customer.rewards_points }}</p>
+        <p>Points earned this visit: {{ (order.total_amount / 100)|int }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="divider"></div>
+    
+    <div class="footer">
+        <p>Thank you for dining at Tokyo Tokyo!</p>
+        <p>Visit us again soon!</p>
+    </div>
+    
+    <div class="no-print" style="margin-top: 20px; text-align: center;">
+        <button onclick="window.print()">Print Receipt</button>
+        <button onclick="window.close()">Close</button>
+    </div>
+    
+    <script>
+        // Auto print when page loads
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>

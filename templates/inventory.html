@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory Management{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Inventory Management</h1>
+    <div class="space-x-2">
+        <button id="add-ingredient-btn" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-plus mr-2"></i> Add Ingredient
+        </button>
+        <button id="add-stock-btn" class="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-plus mr-2"></i> Add Stock
+        </button>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Inventory Overview -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Inventory Items</h2>
+                <div class="relative">
+                    <input type="text" id="search-inventory" placeholder="Search ingredients..." class="pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200" id="inventory-table-body">
+                        {% for ingredient in ingredients %}
+                        <tr>
+                            <td class="py-3 px-4">{{ ingredient.name }}</td>
+                            <td class="py-3 px-4">{{ ingredient.quantity }}</td>
+                            <td class="py-3 px-4">{{ ingredient.unit }}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 text-xs rounded-full 
+                                {% if ingredient.quantity <= ingredient.threshold %}bg-red-100 text-red-800
+                                {% elif ingredient.quantity <= ingredient.threshold * 1.5 %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                    {% if ingredient.quantity <= ingredient.threshold %}Low Stock
+                                    {% elif ingredient.quantity <= ingredient.threshold * 1.5 %}Medium Stock
+                                    {% else %}In Stock{% endif %}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">{{ ingredient.supplier.name if ingredient.supplier else 'N/A' }}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-800 edit-ingredient" data-id="{{ ingredient.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="text-green-600 hover:text-green-800 add-stock" data-id="{{ ingredient.id }}" data-name="{{ ingredient.name }}">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                    <button class="text-orange-600 hover:text-orange-800 record-usage" data-id="{{ ingredient.id }}" data-name="{{ ingredient.name }}">
+                                        <i class="fas fa-minus-circle"></i>
+                                    </button>
+                                    <button class="text-red-600 hover:text-red-800 delete-ingredient" data-id="{{ ingredient.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock & Activity Log -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Low Stock Alerts -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Low Stock Alerts</h2>
+            <div class="space-y-4">
+                {% for ingredient in low_stock %}
+                <div class="flex items-center justify-between p-3 bg-red-50 rounded border border-red-200">
+                    <div>
+                        <p class="font-semibold">{{ ingredient.name }}</p>
+                        <p class="text-sm text-gray-600">{{ ingredient.quantity }} {{ ingredient.unit }} remaining</p>
+                    </div>
+                    <button class="text-red-600 hover:text-red-800 reorder-ingredient" data-id="{{ ingredient.id }}">
+                        <i class="fas fa-shopping-cart mr-1"></i> Reorder
+                    </button>
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 py-4">No low stock items</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Recent Activity</h2>
+            <div class="space-y-3">
+                {% for log in inventory_logs %}
+                <div class="border-b pb-2">
+                    <p class="font-medium">{{ log.ingredient.name }}</p>
+                    <p class="text-sm 
+                       {% if log.reason == 'purchase' %}text-green-600
+                       {% elif log.reason == 'usage' %}text-blue-600
+                       {% else %}text-red-600{% endif %}">
+                        {{ log.quantity_change }} {{ log.ingredient.unit }} 
+                        {% if log.reason == 'purchase' %}added
+                        {% elif log.reason == 'usage' %}used
+                        {% else %}wasted{% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500">{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }} by {{ log.user.name }}</p>
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 py-4">No recent activity</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Supplier Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Suppliers</h2>
+                <button id="manage-suppliers" class="text-red-700 hover:text-red-800">
+                    <i class="fas fa-cog mr-1"></i> Manage
+                </button>
+            </div>
+            <div class="space-y-3">
+                {% for supplier in suppliers %}
+                <div class="border-b pb-2">
+                    <p class="font-medium">{{ supplier.name }}</p>
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-user mr-1"></i> {{ supplier.contact_person }}
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-phone mr-1"></i> {{ supplier.phone }}
+                    </p>
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 py-4">No suppliers</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add ingredient button
+        document.getElementById('add-ingredient-btn').addEventListener('click', function() {
+            alert("Add ingredient functionality would be implemented here");
+        });
+        
+        // Add stock button
+        document.getElementById('add-stock-btn').addEventListener('click', function() {
+            alert("Add stock functionality would be implemented here");
+        });
+        
+        // Search functionality
+        document.getElementById('search-inventory').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#inventory-table-body tr');
+            
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        });
+    });
+</script>
+{% endblock scripts %}

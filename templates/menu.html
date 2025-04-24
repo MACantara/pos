@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Menu Management{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Menu Management</h1>
+    <button id="add-product-btn" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">
+        <i class="fas fa-plus mr-2"></i> Add New Item
+    </button>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6">
+    <!-- Category Tabs -->
+    <div class="mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <button class="category-tab py-2 px-1 border-b-2 border-red-700 text-red-700 font-medium" data-category="all">All Categories</button>
+                {% for category in categories %}
+                    <button class="category-tab py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-category="{{ category.id }}">{{ category.name }}</button>
+                {% endfor %}
+                <button id="manage-categories" class="ml-auto text-red-700">
+                    <i class="fas fa-cog mr-1"></i> Manage Categories
+                </button>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Products Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" id="products-table-body">
+                {% for product in products %}
+                <tr data-category="{{ product.category_id }}">
+                    <td class="py-3 px-4">
+                        <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="h-12 w-12 object-cover rounded">
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="font-medium text-gray-900">{{ product.name }}</div>
+                        <div class="text-gray-500 text-sm truncate max-w-xs">{{ product.description }}</div>
+                    </td>
+                    <td class="py-3 px-4">{{ product.category.name }}</td>
+                    <td class="py-3 px-4">₱{{ "{:,.2f}".format(product.price) }}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                        {% if product.available %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ 'Available' if product.available else 'Out of Stock' }}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            <button class="text-blue-600 hover:text-blue-800 edit-product" data-id="{{ product.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-800 delete-product" data-id="{{ product.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="text-green-600 hover:text-green-800 toggle-product" data-id="{{ product.id }}" data-available="{{ product.available }}">
+                                <i class="fas {{ 'fa-toggle-off' if not product.available else 'fa-toggle-on' }}"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Product Modal -->
+<div id="product-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="product-modal-title">Add New Item</h2>
+            <button onclick="closeProductModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="product-form" enctype="multipart/form-data">
+            <input type="hidden" id="product-id" name="id">
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-name">
+                    Product Name
+                </label>
+                <input type="text" id="product-name" name="name" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-category">
+                    Category
+                </label>
+                <select id="product-category" name="category_id" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+                    {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-price">
+                    Price (₱)
+                </label>
+                <input type="number" id="product-price" name="price" step="0.01" min="0" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-description">
+                    Description
+                </label>
+                <textarea id="product-description" name="description" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"></textarea>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-image">
+                    Product Image
+                </label>
+                <input type="file" id="product-image" name="image" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+                <div id="current-image-container" class="mt-2 hidden">
+                    <p class="text-sm text-gray-600">Current Image:</p>
+                    <img id="current-image" class="h-24 w-24 object-cover rounded mt-1">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Availability
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="available" value="true" checked class="form-radio text-red-700">
+                    <span class="ml-2">Available</span>
+                </label>
+                <label class="inline-flex items-center ml-6">
+                    <input type="radio" name="available" value="false" class="form-radio text-red-700">
+                    <span class="ml-2">Out of Stock</span>
+                </label>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="button" onclick="closeProductModal()" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400 mr-2">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Category Management Modal -->
+<div id="category-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Manage Categories</h2>
+            <button onclick="closeCategoryModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <h3 class="font-bold text-lg mb-2">Add New Category</h3>
+            <div class="flex">
+                <input type="text" id="new-category-name" class="flex-1 px-3 py-2 border rounded-l-md focus:outline-none focus:ring-1 focus:ring-red-500" placeholder="Category name">
+                <button id="add-category-btn" class="bg-red-700 text-white py-2 px-4 rounded-r-md hover:bg-red-800">
+                    Add
+                </button>
+            </div>
+        </div>
+        
+        <div>
+            <h3 class="font-bold text-lg mb-2">Existing Categories</h3>
+            <ul id="categories-list" class="border rounded-md divide-y">
+                {% for category in categories %}
+                <li class="flex justify-between items-center p-3">
+                    <span>{{ category.name }}</span>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-600 hover:text-blue-800 edit-category" data-id="{{ category.id }}" data-name="{{ category.name }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-600 hover:text-red-800 delete-category" data-id="{{ category.id }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category filtering
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab styling
+                document.querySelectorAll('.category-tab').forEach(t => {
+                    t.classList.remove('border-red-700', 'text-red-700');
+                    t.classList.add('border-transparent', 'text-gray-500');
+                });
+                this.classList.add('border-red-700', 'text-red-700');
+                this.classList.remove('border-transparent', 'text-gray-500');
+                
+                // Filter products
+                const categoryId = this.dataset.category;
+                filterProducts(categoryId);
+            });
+        });
+        
+        // Add product button
+        document.getElementById('add-product-btn').addEventListener('click', function() {
+            document.getElementById('product-modal-title').textContent = 'Add New Item';
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('current-image-container').classList.add('hidden');
+            document.getElementById('product-modal').classList.remove('hidden');
+        });
+        
+        // Manage categories button
+        document.getElementById('manage-categories').addEventListener('click', function() {
+            document.getElementById('category-modal').classList.remove('hidden');
+        });
+        
+        // Product form submission
+        document.getElementById('product-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const productId = document.getElementById('product-id').value;
+            
+            // Send to server - in a real app this would save the product
+            fetch(`/api/products${productId ? '/' + productId : ''}`, {
+                method: productId ? 'PUT' : 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(productId ? 'Product updated successfully!' : 'Product added successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('An error occurred');
+            });
+        });
+        
+        // Edit product buttons
+        document.querySelectorAll('.edit-product').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.id;
+                
+                // In a real app, fetch product details from the server
+                fetch(`/api/products/${productId}`)
+                    .then(response => response.json())
+                    .then(product => {
+                        document.getElementById('product-modal-title').textContent = 'Edit Item';
+                        document.getElementById('product-id').value = product.id;
+                        document.getElementById('product-name').value = product.name;
+                        document.getElementById('product-category').value = product.category_id;
+                        document.getElementById('product-price').value = product.price;
+                        document.getElementById('product-description').value = product.description;
+                        
+                        document.querySelector(`input[name="available"][value="${product.available}"]`).checked = true;
+                        
+                        // Show current image
+                        document.getElementById('current-image-container').classList.remove('hidden');
+                        document.getElementById('current-image').src = `/static/uploads/${product.image}`;
+                        
+                        document.getElementById('product-modal').classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        alert('Error loading product details');
+                    });
+            });
+        });
+        
+        // Delete product buttons
+        document.querySelectorAll('.delete-product').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this product?')) {
+                    const productId = this.dataset.id;
+                    
+                    // In a real app, send delete request to server
+                    fetch(`/api/products/${productId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Product deleted successfully!');
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('An error occurred');
+                    });
+                }
+            });
+        });
+        
+        // Toggle product availability
+        document.querySelectorAll('.toggle-product').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.id;
+                const currentAvailable = this.dataset.available === 'True';
+                
+                // In a real app, send update to server
+                fetch(`/api/products/${productId}/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ available: !currentAvailable })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred');
+                });
+            });
+        });
+        
+        // Category management
+        document.getElementById('add-category-btn').addEventListener('click', function() {
+            const categoryName = document.getElementById('new-category-name').value;
+            if (categoryName.trim() === '') {
+                alert('Please enter a category name');
+                return;
+            }
+            
+            // In a real app, send to server
+            fetch('/api/categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: categoryName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Category added successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('An error occurred');
+            });
+        });
+    });
+    
+    function filterProducts(categoryId) {
+        const rows = document.querySelectorAll('#products-table-body tr');
+        
+        rows.forEach(row => {
+            if (categoryId === 'all' || row.dataset.category === categoryId) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+    
+    function closeProductModal() {
+        document.getElementById('product-modal').classList.add('hidden');
+    }
+    
+    function closeCategoryModal() {
+        document.getElementById('category-modal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

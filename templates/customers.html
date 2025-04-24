@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">Customers</h1>
+        <button id="add-customer-btn" class="bg-blue-500 text-white px-4 py-2 rounded">Add Customer</button>
+    </div>
+    <div class="mb-4">
+        <input type="text" id="search-customers" class="border rounded px-4 py-2 w-full" placeholder="Search customers...">
+    </div>
+    <table class="min-w-full bg-white">
+        <thead>
+            <tr>
+                <th class="py-2 px-4 border-b">Name</th>
+                <th class="py-2 px-4 border-b">Contact</th>
+                <th class="py-2 px-4 border-b">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="customers-table-body">
+            {% for customer in customers %}
+            <tr>
+                <td class="py-2 px-4 border-b">{{ customer.name }}</td>
+                <td class="py-2 px-4 border-b">{{ customer.phone }}</td>
+                <td class="py-2 px-4 border-b">
+                    <button class="edit-customer bg-yellow-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}">Edit</button>
+                    <button class="view-customer bg-green-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}">View</button>
+                    <button class="add-points bg-purple-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}" data-name="{{ customer.name }}">Add Points</button>
+                    <button class="send-promo bg-red-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}">Send Birthday Promo</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Customer Modal -->
+<div id="customer-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 id="customer-modal-title" class="text-xl font-bold mb-4">Add Customer</h2>
+        <form id="customer-form">
+            <input type="hidden" id="customer-id" name="id">
+            <div class="mb-4">
+                <label for="customer-name" class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" id="customer-name" name="name" class="border rounded px-4 py-2 w-full" required>
+            </div>
+            <div class="mb-4">
+                <label for="customer-phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                <input type="text" id="customer-phone" name="phone" class="border rounded px-4 py-2 w-full" required>
+            </div>
+            <div class="mb-4">
+                <label for="customer-email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="customer-email" name="email" class="border rounded px-4 py-2 w-full">
+            </div>
+            <div class="mb-4">
+                <label for="customer-birthday" class="block text-sm font-medium text-gray-700">Birthday</label>
+                <input type="date" id="customer-birthday" name="birthday" class="border rounded px-4 py-2 w-full">
+            </div>
+            <div id="points-field" class="mb-4">
+                <label for="customer-points" class="block text-sm font-medium text-gray-700">Rewards Points</label>
+                <input type="number" id="customer-points" name="rewards_points" class="border rounded px-4 py-2 w-full" value="0">
+            </div>
+            <div class="flex justify-end">
+                <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded mr-2" onclick="closeCustomerModal()">Cancel</button>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Points Modal -->
+<div id="points-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">Add Points</h2>
+        <form id="points-form">
+            <input type="hidden" id="points-customer-id" name="customer_id">
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">Customer</p>
+                <p id="customer-name-display" class="text-lg font-bold"></p>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">Current Points</p>
+                <p id="current-points" class="text-lg font-bold"></p>
+            </div>
+            <div class="mb-4">
+                <label for="points-to-add" class="block text-sm font-medium text-gray-700">Points to Add</label>
+                <input type="number" id="points-to-add" name="points" class="border rounded px-4 py-2 w-full" value="1" min="1">
+            </div>
+            <div class="flex justify-end">
+                <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded mr-2" onclick="closePointsModal()">Cancel</button>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Points</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View Customer Modal -->
+<div id="view-customer-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">Customer Details</h2>
+        <div class="mb-4">
+            <p class="text-sm text-gray-600">Name</p>
+            <p id="view-customer-name" class="text-lg font-bold"></p>
+        </div>
+        <div id="customer-details" class="mb-4"></div>
+        <h3 class="text-lg font-bold mb-2">Purchase History</h3>
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b">Date</th>
+                    <th class="py-2 px-4 border-b">Order Number</th>
+                    <th class="py-2 px-4 border-b text-right">Total Amount</th>
+                    <th class="py-2 px-4 border-b text-right">Points Earned</th>
+                </tr>
+            </thead>
+            <tbody id="purchase-history"></tbody>
+        </table>
+        <div class="flex justify-end mt-4">
+            <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded" onclick="closeViewModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add customer button
+        document.getElementById('add-customer-btn').addEventListener('click', function() {
+            document.getElementById('customer-modal-title').textContent = 'Add Customer';
+            document.getElementById('customer-form').reset();
+            document.getElementById('customer-id').value = '';
+            document.getElementById('points-field').style.display = 'block';
+            document.getElementById('customer-modal').classList.remove('hidden');
+        });
+        
+        // Edit customer buttons
+        document.querySelectorAll('.edit-customer').forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.dataset.id;
+                
+                // Fetch customer details
+                fetch(`/api/customers/${customerId}`)
+                    .then(response => response.json())
+                    .then(customer => {
+                        document.getElementById('customer-modal-title').textContent = 'Edit Customer';
+                        document.getElementById('customer-id').value = customer.id;
+                        document.getElementById('customer-name').value = customer.name;
+                        document.getElementById('customer-phone').value = customer.phone;
+                        document.getElementById('customer-email').value = customer.email || '';
+                        document.getElementById('customer-birthday').value = customer.birthday || '';
+                        document.getElementById('customer-points').value = customer.rewards_points;
+                        document.getElementById('points-field').style.display = 'none';
+                        
+                        document.getElementById('customer-modal').classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        alert('Error loading customer details');
+                    });
+            });
+        });
+        
+        // View customer details
+        document.querySelectorAll('.view-customer').forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.dataset.id;
+                
+                // Fetch customer details
+                fetch(`/api/customers/${customerId}`)
+                    .then(response => response.json())
+                    .then(customer => {
+                        document.getElementById('view-customer-name').textContent = customer.name;
+                        
+                        // Format customer details
+                        let details = `
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Phone</p>
+                                    <p>${customer.phone || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Email</p>
+                                    <p>${customer.email || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Birthday</p>
+                                    <p>${customer.birthday || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Rewards Points</p>
+                                    <p class="flex items-center">
+                                        <span class="text-yellow-500 mr-1"><i class="fas fa-star"></i></span>
+                                        ${customer.rewards_points} points
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.getElementById('customer-details').innerHTML = details;
+                        
+                        // Format purchase history
+                        if (customer.orders && customer.orders.length > 0) {
+                            let historyHTML = '';
+                            customer.orders.forEach(order => {
+                                historyHTML += `
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">${new Date(order.created_at).toLocaleDateString()}</td>
+                                        <td class="py-2 px-4 border-b">${order.order_number}</td>
+                                        <td class="py-2 px-4 border-b text-right">₱${order.total_amount.toFixed(2)}</td>
+                                        <td class="py-2 px-4 border-b text-right">+${Math.floor(order.total_amount / 100)}</td>
+                                    </tr>
+                                `;
+                            });
+                            document.getElementById('purchase-history').innerHTML = historyHTML;
+                        } else {
+                            document.getElementById('purchase-history').innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">No purchase history available</td></tr>';
+                        }
+                        
+                        document.getElementById('view-customer-modal').classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        alert('Error loading customer details');
+                    });
+            });
+        });
+        
+        // Add points to customer
+        document.querySelectorAll('.add-points').forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.dataset.id;
+                const customerName = this.dataset.name;
+                
+                // Fetch current points
+                fetch(`/api/customers/${customerId}`)
+                    .then(response => response.json())
+                    .then(customer => {
+                        document.getElementById('points-customer-id').value = customerId;
+                        document.getElementById('customer-name-display').textContent = customerName;
+                        document.getElementById('current-points').textContent = customer.rewards_points;
+                        document.getElementById('points-form').reset();
+                        document.getElementById('points-to-add').value = 1;
+                        document.getElementById('points-modal').classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        alert('Error loading customer details');
+                    });
+            });
+        });
+        
+        // Customer form submission
+        document.getElementById('customer-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const customerId = document.getElementById('customer-id').value;
+            
+            // Send to server
+            fetch(`/api/customers${customerId ? '/' + customerId : ''}`, {
+                method: customerId ? 'PUT' : 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(customerId ? 'Customer updated successfully!' : 'Customer added successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('An error occurred');
+            });
+        });
+        
+        // Points form submission
+        document.getElementById('points-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            // Send to server
+            fetch('/api/customers/add-points', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Points added successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('An error occurred');
+            });
+        });
+        
+        // Scan QR code button
+        document.getElementById('scan-qr').addEventListener('click', function() {
+            // In a real app, this would access the camera to scan a QR code
+            alert('QR code scanning would be implemented here');
+        });
+        
+        // Search functionality
+        document.getElementById('search-customers').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#customers-table-body tr');
+            
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const contact = row.cells[1].textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || contact.includes(searchTerm)) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        });
+        
+        // Send birthday promo buttons
+        document.querySelectorAll('.send-promo').forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.dataset.id;
+                
+                // Send to server
+                fetch(`/api/customers/${customerId}/birthday-promo`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Birthday promotion sent successfully!');
+                        this.disabled = true;
+                        this.textContent = 'Sent';
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred');
+                });
+            });
+        });
+    });
+    
+    function closeCustomerModal() {
+        document.getElementById('customer-modal').classList.add('hidden');
+    }
+    
+    function closePointsModal() {
+        document.getElementById('points-modal').classList.add('hidden');
+    }
+    
+    function closeViewModal() {
+        document.getElementById('view-customer-modal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

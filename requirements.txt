@@ -1,0 +1,9 @@
+flask
+flask_sqlalchemy
+flask_login
+flask_migrate
+werkzeug
+PyPDF2
+pandas
+openpyxl
+pillow

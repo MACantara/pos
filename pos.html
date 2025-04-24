@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokyo Tokyo</title>
+    <link rel="stylesheet" href="pos.css">
+</head>
+<body>
+    <div class="pos-container">
+        <div class="menu">
+            <div class="menu-item" onclick="addToCart('Beef Teriyaki', 150)">
+                <img src="beef.jpg" alt="Beef Teriyaki">
+                <p>Beef Teriyaki - ₱150</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Chicken Katsu', 130)">
+                <img src="katsu.jpg" alt="Chicken Katsu">
+                <p>Chicken Katsu - ₱130</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Pork Tonkatsu', 140)">
+                <img src="tonkatsu.jpg" alt="Pork Tonkatsu">
+                <p>Pork Tonkatsu - ₱140</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Pork Gyudon', 170)">
+                <img src="gyudon.jpg" alt="Beef Teriyaki">
+                <p>Pork Gyudon - ₱170</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Salmon Teriyaki', 200)">
+                <img src="salmon.jpg" alt="Beef Teriyaki">
+                <p>Salmon Teriyaki - ₱200</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Chicken Oyakodon', 180)">
+                <img src="oyakodon.jpg" alt="Beef Teriyaki">
+                <p>Chicken Oyakodon - ₱180</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('BeefMisono Bento ala Carte', 220)">
+                <img src="misono.jpg" alt="Beef Teriyaki">
+                <p>BeefMisono Bento ala Carte - ₱220</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('W.Cubes Bento ala Carte', 250)">
+                <img src="wagyu.jpg" alt="Beef Teriyaki">
+                <p>W.Cubes Bento ala Carte - ₱250</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Cheesy Donburi', 190)">
+                <img src="cheesy.jpg" alt="Beef Teriyaki">
+                <p>Cheesy Donburi -₱190</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Yakisoba Tray', 500)">
+                <img src="tray.jpg" alt="Beef Teriyaki">
+                <p>Yakisoba Tray - ₱500</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Tempura Dragon Maki', 320)">
+                <img src="maki.jpg" alt="Beef Teriyaki">
+                <p>Tempura Dragon Maki - ₱320</p>
+            </div>
+            <div class="menu-item" onclick="addToCart('Takoyaki Potato Balls', 120)">
+                <img src="balls.jpg" alt="Beef Teriyaki">
+                <p>Takoyaki Potato Balls - ₱120</p>
+            </div>
+        </div>
+        <div class="cart">
+            <h2>CART</h2>
+            <ul id="cart-list"></ul>
+            <p id="total-price">Total: ₱0</p>
+            <button onclick="checkout()">Checkout</button>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" class="modal">
+        <div class="modal-content">
+            <h2>RECEIPT</h2>
+            <ul id="receipt-list"></ul>
+            <p id="receipt-total">Total: ₱0</p>
+
+            <label>
+                <input type="checkbox" id="discount-checkbox" onclick="applyDiscount()">PWD/Senior Citizen Discount (20%)
+            </label>
+            <p id="discounted-total">Discounted Total: ₱0</p>
+
+            <label for="payment-input">Enter Payment (₱):</label>
+            <input type="number" id="payment-input" placeholder="Enter amount" oninput="calculateChange()">
+            <p id="change-display">Change: ₱0</p>
+
+            <button onclick="closeReceipt()">Close</button>
+        </div>
+    </div>
+
+    <script src="pos.js"></script>
+</body>
+</html>

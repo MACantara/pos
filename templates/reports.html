@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Reports{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Sales Reports</h1>
+
+<!-- Report Filters -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <form id="report-filters" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="report-type">
+                Report Type
+            </label>
+            <select id="report-type" name="report_type" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+                <option value="sales">Sales Report</option>
+                <option value="items">Item Sales Report</option>
+                <option value="staff">Staff Performance</option>
+                <option value="payment">Payment Methods</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="date-range">
+                Date Range
+            </label>
+            <select id="date-range" name="date_range" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="this_week">This Week</option>
+                <option value="last_week">Last Week</option>
+                <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="custom">Custom Range</option>
+            </select>
+        </div>
+        <div class="date-picker hidden">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="date-start">
+                Start Date
+            </label>
+            <input type="date" id="date-start" name="date_start" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+        </div>
+        <div class="date-picker hidden">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="date-end">
+                End Date
+            </label>
+            <input type="date" id="date-end" name="date_end" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500">
+        </div>
+        <div class="md:col-span-4 flex justify-end space-x-2">
+            <button type="button" id="generate-report" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">
+                Generate Report
+            </button>
+            <div class="dropdown inline-block relative">
+                <button type="button" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                    <span>Export</span>
+                    <svg class="fill-current h-4 w-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/> </svg>
+                </button>
+                <ul class="dropdown-menu absolute hidden text-gray-700 pt-1 w-full z-10">
+                    <li><a class="rounded-t bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#" id="export-excel">Excel</a></li>
+                    <li><a class="bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#" id="export-pdf">PDF</a></li>
+                    <li><a class="rounded-b bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#" id="export-csv">CSV</a></li>
+                </ul>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Report Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-2">Total Sales</h2>
+        <p class="text-3xl font-bold text-green-700">₱<span id="total-sales">0.00</span></p>
+        <p class="text-sm text-gray-500"><span id="orders-count">0</span> orders</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-2">Average Order Value</h2>
+        <p class="text-3xl font-bold text-blue-700">₱<span id="avg-order">0.00</span></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-2">Top Selling Category</h2>
+        <p class="text-3xl font-bold text-purple-700"><span id="top-category">N/A</span></p>
+        <p class="text-sm text-gray-500"><span id="category-percentage">0</span>% of sales</p>
+    </div>
+</div>
+
+<!-- Report Chart -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">Sales Trend</h2>
+    <div class="h-80">
+        <canvas id="sales-chart"></canvas>
+    </div>
+</div>
+
+<!-- Report Tables -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Top Selling Items -->
+    <div class="bg-white rounded-lg shadow p-6" id="top-items-container">
+        <h2 class="text-xl font-bold mb-4">Top Selling Items</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 bg-gray-50 text-left">Item</th>
+                        <th class="py-2 px-4 bg-gray-50 text-right">Quantity</th>
+                        <th class="py-2 px-4 bg-gray-50 text-right">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody id="top-items">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Payment Methods -->
+    <div class="bg-white rounded-lg shadow p-6" id="payment-container">
+        <h2 class="text-xl font-bold mb-4">Payment Methods</h2>
+        <div class="h-64">
+            <canvas id="payment-chart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Staff Performance -->
+    <div class="bg-white rounded-lg shadow p-6" id="staff-container">
+        <h2 class="text-xl font-bold mb-4">Staff Performance</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 bg-gray-50 text-left">Staff</th>
+                        <th class="py-2 px-4 bg-gray-50 text-right">Orders</th>
+                        <th class="py-2 px-4 bg-gray-50 text-right">Sales</th>
+                    </tr>
+                </thead>
+                <tbody id="staff-performance">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Hourly Sales -->
+    <div class="bg-white rounded-lg shadow p-6" id="hourly-container">
+        <h2 class="text-xl font-bold mb-4">Peak Hours</h2>
+        <div class="h-64">
+            <canvas id="hourly-chart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide date pickers based on date range selection
+        document.getElementById('date-range').addEventListener('change', function() {
+            const datePickers = document.querySelectorAll('.date-picker');
+            if (this.value === 'custom') {
+                datePickers.forEach(el => el.classList.remove('hidden'));
+            } else {
+                datePickers.forEach(el => el.classList.add('hidden'));
+            }
+        });
+        
+        // Show/hide dropdown menu
+        document.querySelector('.dropdown').addEventListener('click', function() {
+            document.querySelector('.dropdown-menu').classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.dropdown');
+            if (!dropdown.contains(event.target)) {
+                document.querySelector('.dropdown-menu').classList.add('hidden');
+            }
+        });
+        
+        // Generate report button
+        document.getElementById('generate-report').addEventListener('click', function() {
+            generateReport();
+        });
+        
+        // Export buttons
+        document.getElementById('export-excel').addEventListener('click', function(e) {
+            e.preventDefault();
+            exportReport('excel');
+        });
+        
+        document.getElementById('export-pdf').addEventListener('click', function(e) {
+            e.preventDefault();
+            exportReport('pdf');
+        });
+        
+        document.getElementById('export-csv').addEventListener('click', function(e) {
+            e.preventDefault();
+            exportReport('csv');
+        });
+        
+        // Initialize with sample data
+        generateReport();
+    });
+    
+    function generateReport() {
+        const reportType = document.getElementById('report-type').value;
+        const dateRange = document.getElementById('date-range').value;
+        
+        // In a real app, this would fetch data from the server
+        // For now, we'll generate sample data
+        
+        // Update summary cards with sample data
+        document.getElementById('total-sales').textContent = '42,850.00';
+        document.getElementById('orders-count').textContent = '156';
+        document.getElementById('avg-order').textContent = '274.68';
+        document.getElementById('top-category').textContent = 'Ramen';
+        document.getElementById('category-percentage').textContent = '35';
+        
+        // Show/hide relevant containers based on report type
+        document.getElementById('top-items-container').style.display = 
+            (reportType === 'sales' || reportType === 'items') ? 'block' : 'none';
+        
+        document.getElementById('payment-container').style.display = 
+            (reportType === 'sales' || reportType === 'payment') ? 'block' : 'none';
+        
+        document.getElementById('staff-container').style.display = 
+            (reportType === 'sales' || reportType === 'staff') ? 'block' : 'none';
+        
+        document.getElementById('hourly-container').style.display = 
+            (reportType === 'sales') ? 'block' : 'none';
+        
+        // Generate sample data for tables
+        generateTopItemsTable();
+        generateStaffPerformanceTable();
+        
+        // Generate charts
+        generateSalesChart();
+        generatePaymentChart();
+        generateHourlyChart();
+    }
+    
+    function generateTopItemsTable() {
+        const sampleData = [
+            { name: 'Chicken Teriyaki Bento', quantity: 87, revenue: 21750 },
+            { name: 'Spicy Ramen', quantity: 65, revenue: 16250 },
+            { name: 'California Maki', quantity: 52, revenue: 7800 },
+            { name: 'Gyoza (6 pcs)', quantity: 45, revenue: 6750 },
+            { name: 'Green Tea Ice Cream', quantity: 38, revenue: 3800 }
+        ];
+        
+        let html = '';
+        sampleData.forEach(item => {
+            html += `
+                <tr>
+                    <td class="py-2 px-4 border-b">${item.name}</td>
+                    <td class="py-2 px-4 border-b text-right">${item.quantity}</td>
+                    <td class="py-2 px-4 border-b text-right">₱${item.revenue.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        
+        document.getElementById('top-items').innerHTML = html;
+    }
+    
+    function generateStaffPerformanceTable() {
+        const sampleData = [
+            { name: 'Maria Santos', orders: 45, sales: 12350 },
+            { name: 'John Reyes', orders: 38, sales: 10250 },
+            { name: 'Anna Garcia', orders: 36, sales: 9800 },
+            { name: 'David Lee', orders: 25, sales: 6950 },
+            { name: 'Sarah Kim', orders: 12, sales: 3500 }
+        ];
+        
+        let html = '';
+        sampleData.forEach(staff => {
+            html += `
+                <tr>
+                    <td class="py-2 px-4 border-b">${staff.name}</td>
+                    <td class="py-2 px-4 border-b text-right">${staff.orders}</td>
+                    <td class="py-2 px-4 border-b text-right">₱${staff.sales.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        
+        document.getElementById('staff-performance').innerHTML = html;
+    }
+    
+    function generateSalesChart() {
+        const ctx = document.getElementById('sales-chart').getContext('2d');
+        
+        // Sample data
+        const labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const data = [4500, 5200, 4800, 5700, 6200, 8500, 7950];
+        
+        if (window.salesChart) {
+            window.salesChart.destroy();
+        }
+        
+        window.salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sales (₱)',
+                    data: data,
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    borderColor: 'rgba(220, 38, 38, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function generatePaymentChart() {
+        const ctx = document.getElementById('payment-chart').getContext('2d');
+        
+        // Sample data
+        const data = {
+            labels: ['Cash', 'Credit Card', 'GCash', 'PayMaya'],
+            datasets: [{
+                data: [45, 25, 20, 10],
+                backgroundColor: [
+                    'rgba(34, 197, 94, 0.8)',
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(168, 85, 247, 0.8)',
+                    'rgba(249, 115, 22, 0.8)'
+                ],
+                hoverBackgroundColor: [
+                    'rgba(34, 197, 94, 1)',
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(168, 85, 247, 1)',
+                    'rgba(249, 115, 22, 1)'
+                ]
+            }]
+        };
+        
+        if (window.paymentChart) {
+            window.paymentChart.destroy();
+        }
+        
+        window.paymentChart = new Chart(ctx, {
+            type: 'pie',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${value}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function generateHourlyChart() {
+        const ctx = document.getElementById('hourly-chart').getContext('2d');
+        
+        // Sample data for hourly sales
+        const labels = ['10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM', '9PM'];
+        const data = [1200, 1800, 3500, 4000, 2500, 1800, 2200, 3500, 4800, 5200, 4500, 3200];
+        
+        if (window.hourlyChart) {
+            window.hourlyChart.destroy();
+        }
+        
+        window.hourlyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sales by Hour',
+                    data: data,
+                    backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                    borderColor: 'rgba(79, 70, 229, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function exportReport(format) {
+        // In a real app, this would generate and download the report
+        alert(`Exporting report in ${format.toUpperCase()} format...`);
+        // The actual implementation would call a server endpoint to generate the file
+    }
+</script>
+{% endblock %}

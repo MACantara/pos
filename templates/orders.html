@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto py-8">
+    <h1 class="text-2xl font-bold mb-4">Orders</h1>
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 bg-gray-200">Order #</th>
+                    <th class="py-2 px-4 bg-gray-200">Date/Time</th>
+                    <th class="py-2 px-4 bg-gray-200">Type</th>
+                    <th class="py-2 px-4 bg-gray-200">Status</th>
+                    <th class="py-2 px-4 bg-gray-200">Staff</th>
+                    <th class="py-2 px-4 bg-gray-200">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if orders %}
+                    {% for order in orders %}
+                    <tr>
+                        <td class="py-4 px-4 whitespace-nowrap">{{ order.order_number }}</td>
+                        <td class="py-4 px-4 whitespace-nowrap">{{ order.created_at }}</td>
+                        <td class="py-4 px-4 whitespace-nowrap">{{ order.order_type }}</td>
+                        <td class="py-4 px-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if order.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif order.status == 'in-progress' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 whitespace-nowrap">{{ order.staff_name }}</td>
+                        <td class="py-4 px-4 whitespace-nowrap">
+                            <div class="flex space-x-2">
+                                <button class="text-blue-600 hover:text-blue-800" onclick="viewOrder('{{ order.id }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                
+                                {% if order.status != 'completed' %}
+                                <button class="text-green-600 hover:text-green-800" onclick="updateStatus('{{ order.id }}', 'completed')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <button class="text-red-600 hover:text-red-800" onclick="printReceipt('{{ order.id }}')">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="py-4 text-center text-gray-500">No orders found</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div id="order-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Order Details</h2>
+            <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="order-details-content">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function viewOrder(orderId) {
+        // In a real app, this would fetch order details from the server
+        document.getElementById('order-modal').classList.remove('hidden');
+        document.getElementById('order-details-content').innerHTML = 
+            '<div class="text-center"><i class="fas fa-spinner fa-spin text-2xl"></i><p>Loading...</p></div>';
+        
+        fetch(`/api/orders/${orderId}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = `
+                    <div class="mb-4">
+                        <p><strong>Order #:</strong> ${data.order_number}</p>
+                        <p><strong>Date/Time:</strong> ${data.created_at}</p>
+                        <p><strong>Type:</strong> ${data.order_type}</p>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Staff:</strong> ${data.staff_name}</p>
+                    </div>
+                    <table class="min-w-full mb-4">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Item</th>
+                                <th class="text-left">Quantity</th>
+                                <th class="text-left">Price</th>
+                                <th class="text-left">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                data.items.forEach(item => {
+                    html += `
+                        <tr>
+                            <td class="py-2">${item.name}</td>
+                            <td class="py-2">${item.quantity}</td>
+                            <td class="py-2">₱${item.price.toFixed(2)}</td>
+                            <td class="py-2">₱${(item.price * item.quantity).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between">
+                            <span><strong>Total:</strong></span>
+                            <span>₱${data.total_amount.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span><strong>Payment Method:</strong></span>
+                            <span>${data.payment_method}</span>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('order-details-content').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('order-details-content').innerHTML = 
+                    `<p class="text-red-500">Error loading order details: ${error}</p>`;
+            });
+    }
+    
+    function closeModal() {
+        document.getElementById('order-modal').classList.add('hidden');
+    }
+    
+    function updateStatus(orderId, status) {
+        // In a real app, this would update the order status
+        fetch(`/api/orders/${orderId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: status }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to show updated status
+                window.location.reload();
+            } else {
+                alert('Failed to update order status');
+            }
+        })
+        .catch(error => {
+            alert('An error occurred while updating order status');
+        });
+    }
+    
+    function printReceipt(orderId) {
+        // In a real app, this would generate and print a receipt
+        window.open(`/orders/${orderId}/receipt`, '_blank');
+    }
+</script>
+{% endblock %}
