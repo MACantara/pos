@@ -129,22 +129,22 @@
     
     <!-- Staff Performance -->
     <div class="bg-white p-6 rounded-lg shadow col-span-1">
-        <h2 class="text-xl font-bold mb-4">Staff Performance</h2>
+        <h2 class="text-xl font-bold mb-4">Staff Performance (Today's Orders)</h2> <!-- Updated title slightly for clarity -->
         <div class="space-y-4">
-            {% if staff_on_duty %}
-                {% for staff in staff_on_duty %}
+            {% if staff_performance %} <!-- Use staff_performance variable from the route -->
+                {% for staff in staff_performance %} <!-- Iterate over staff_performance -->
                 <div>
                     <div class="flex justify-between mb-1">
-                        <span>{{ staff.name }}</span>
-                        <span class="text-sm text-gray-500">{{ staff.orders|length }} orders</span>
+                        <span>{{ staff.name }}</span> <!-- Access name directly -->
+                        <span class="text-sm text-gray-500">{{ staff.order_count }} orders</span> <!-- Access order_count directly -->
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                        <div class="bg-red-600 h-2.5 rounded-full" style="width: {{ (staff.orders|length / today_orders * 100) if today_orders > 0 else 0 }}%"></div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700"> <!-- Added dark mode bg for container -->
+                        <div class="bg-red-600 h-2.5 rounded-full" style="width: {{ (staff.order_count / today_orders * 100) if today_orders > 0 else 0 }}%"></div> <!-- Use order_count in calculation -->
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <p class="text-gray-500">No staff on duty</p>
+                <p class="text-gray-500">No staff performance data for today.</p> <!-- Updated else message -->
             {% endif %}
         </div>
     </div>
