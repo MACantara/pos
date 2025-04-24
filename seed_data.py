@@ -30,15 +30,67 @@ def seed_data():
     """Seeds the database with sample data."""
     print("Seeding data...")
     try:
-        # --- Create Users ---
-        print("Creating users...")
-        users = [
-            User(username='cashier1', password=generate_password_hash('password', method='pbkdf2:sha256'), name='Alice Smith', role='cashier'),
-            User(username='kitchen1', password=generate_password_hash('password', method='pbkdf2:sha256'), name='Bob Johnson', role='kitchen'),
-            User(username='manager1', password=generate_password_hash('password', method='pbkdf2:sha256'), name='Charlie Brown', role='manager')
+        # --- Create Default Users (if they don't exist) ---
+        print("Checking/Creating default users...")
+        if not User.query.filter_by(username='admin').first():
+            admin = User(
+                username='admin',
+                password=generate_password_hash('admin123', method='pbkdf2:sha256'), # Use consistent hashing
+                name='Admin User',
+                role='manager'
+            )
+            db.session.add(admin)
+            print("Default admin user created.")
+        else:
+            print("Default admin user already exists.")
+
+        if not User.query.filter_by(username='cashier').first():
+            cashier = User(
+                username='cashier',
+                password=generate_password_hash('cashier123', method='pbkdf2:sha256'), # Use consistent hashing
+                name='Cashier User',
+                role='cashier'
+            )
+            db.session.add(cashier)
+            print("Default cashier user created.")
+        else:
+            print("Default cashier user already exists.")
+        
+        db.session.flush() # Ensure default users get IDs if needed below
+
+        # --- Create Additional Sample Users (Optional) ---
+        print("Creating additional sample users...")
+        # Get existing default users to potentially reuse their IDs or avoid conflicts
+        admin_user = User.query.filter_by(username='admin').first()
+        cashier_user = User.query.filter_by(username='cashier').first()
+        
+        # Example: Add more users only if they don't exist
+        sample_users_data = [
+            {'username': 'cashier1', 'password': 'password', 'name': 'Alice Smith', 'role': 'cashier'},
+            {'username': 'kitchen1', 'password': 'password', 'name': 'Bob Johnson', 'role': 'kitchen'},
+            {'username': 'manager1', 'password': 'password', 'name': 'Charlie Brown', 'role': 'manager'}
         ]
-        db.session.add_all(users)
-        db.session.flush() # Flush to get user IDs if needed immediately
+        
+        users = [admin_user, cashier_user] # Start with default users
+        for user_data in sample_users_data:
+            if not User.query.filter_by(username=user_data['username']).first():
+                new_user = User(
+                    username=user_data['username'],
+                    password=generate_password_hash(user_data['password'], method='pbkdf2:sha256'),
+                    name=user_data['name'],
+                    role=user_data['role']
+                )
+                db.session.add(new_user)
+                users.append(new_user) # Add to list for potential use later in script
+                print(f"Sample user {user_data['username']} created.")
+            else:
+                print(f"Sample user {user_data['username']} already exists.")
+                # Optionally fetch and add existing sample user to the 'users' list if needed
+                existing_sample_user = User.query.filter_by(username=user_data['username']).first()
+                if existing_sample_user not in users:
+                     users.append(existing_sample_user)
+
+        db.session.flush() # Flush to get IDs of any newly added sample users
 
         # --- Create Suppliers ---
         print("Creating suppliers...")
@@ -79,12 +131,15 @@ def seed_data():
         # --- Create Initial Inventory Logs ---
         print("Creating initial inventory logs...")
         initial_logs = []
+        admin_user_for_log = User.query.filter_by(role='manager').first() # Find a manager
+        if not admin_user_for_log: # Fallback if no manager found
+             admin_user_for_log = User.query.first() 
         for ingredient in ingredients:
             initial_logs.append(InventoryLog(
                 ingredient_id=ingredient.id,
                 quantity_change=ingredient.quantity,
                 reason='initial_stock',
-                user_id=users[2].id # Manager added initial stock
+                user_id=admin_user_for_log.id # Use fetched admin/manager user ID
             ))
         db.session.add_all(initial_logs)
 
@@ -158,8 +213,13 @@ def seed_data():
              print("Warning: No products found to create orders with.")
              return # Exit if no products
 
+        all_available_users = User.query.all() # Fetch all users for order assignment
+        if not all_available_users:
+            print("Error: No users found to assign orders to.")
+            return 
+
         for i in range(15): # Create 15 sample orders
-            order_user = random.choice(users)
+            order_user = random.choice(all_available_users) # Assign order to any user
             order_customer = random.choice(customers)
             order_type = random.choice(['dine-in', 'take-out', 'delivery'])
             order_status = random.choice(['pending', 'in-progress', 'completed', 'cancelled'])
@@ -256,11 +316,5 @@ if __name__ == '__main__':
         # Optional: Clear data before seeding. Be careful with this in production!
         clear_data()
         
-        # Check if data already exists (simple check on Users)
-        if User.query.first() is None:
-             seed_data()
-        else:
-             print("Database already contains data. Skipping seeding.")
-             # You might want to add an argument parser here to force seeding
-             # e.g., python seed_data.py --force
-             # Or uncomment clear_data() above if you always want to reset.
+        # Run the seeding logic (which now includes default user checks)
+        seed_data()

@@ -91,28 +91,6 @@ with app.app_context():
     # Create tables
     db.create_all()
     
-    # Create admin user if not exists
-    if not User.query.filter_by(username='admin').first():
-        admin = User(
-            username='admin',
-            password=generate_password_hash('admin123'), # Change this default password
-            name='Admin User',
-            role='manager'
-        )
-        db.session.add(admin)
-        print("Admin user created")
-    
-    # Create cashier user if not exists
-    if not User.query.filter_by(username='cashier').first():
-        cashier = User(
-            username='cashier',
-            password=generate_password_hash('cashier123'), # Change this default password
-            name='Cashier User',
-            role='cashier'
-        )
-        db.session.add(cashier)
-        print("Cashier user created")
-
     # Optional: Seed initial data (Categories, etc.)
     if not Category.query.first():
         print("Seeding initial categories...")
