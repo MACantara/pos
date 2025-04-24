@@ -609,7 +609,7 @@ def generate_report_data():
     ).filter(Order.created_at >= start_dt, Order.created_at <= end_dt, Order.status == 'completed')\
      .group_by('sale_date')\
      .order_by('sale_date')
-    sales_trend = [{'date': d[0].isoformat(), 'sales': float(d[1])} for d in sales_trend_query.all()]
+    sales_trend = [{'date': d[0].isoformat() if isinstance(d[0], date) else d[0], 'sales': float(d[1])} for d in sales_trend_query.all()]
 
 
     # --- Assemble Response ---
