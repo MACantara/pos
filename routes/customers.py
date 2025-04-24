@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, abort
 from flask_login import login_required, current_user
 from extensions import db
 from models import Customer # Import necessary models
-from datetime import date
+from datetime import date # Import date
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
 
@@ -24,7 +24,8 @@ def view_customers():
     return render_template(
         'customers.html',
         customers=customers,
-        is_birthday=is_birthday # Pass function to template
+        is_birthday=is_birthday, # Pass function to template
+        today=today # Pass today's date to the template
     )
 
 # Note: API endpoints for managing customers 
