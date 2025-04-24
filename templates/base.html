@@ -82,7 +82,7 @@
     {% endif %}
     
     <!-- Content Area -->
-    <div class="{% if current_user.is_authenticated and current_user.role != 'cashier' %}content-area{% endif %}">       
+    <div class="{% if current_user.is_authenticated and current_user.role != 'cashier' %}content-area p-6{% endif %}">       
         {% block content %}{% endblock %}
     </div>
     
