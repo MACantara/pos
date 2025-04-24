@@ -21,8 +21,8 @@
     {% block styles %}{% endblock %}
 </head>
 <body class="bg-gray-100">
-    {% if current_user.is_authenticated %}
-    <!-- Sidebar -->
+    {% if current_user.is_authenticated and current_user.role != 'cashier' %}
+    <!-- Sidebar (Only shown for non-cashier roles) -->
     <div class="sidebar bg-red-700 w-64 text-white p-4">
         <div class="flex items-center justify-center mb-8">
             <h1 class="text-xl font-bold">Tokyo Tokyo POS</h1>
