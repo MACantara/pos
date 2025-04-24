@@ -209,10 +209,10 @@
             tab.addEventListener('click', function() {
                 // Update active tab styling
                 document.querySelectorAll('.category-tab').forEach(t => {
-                    t.classList.remove('border-red-700', 'text-red-700');
+                    t.classList.remove('border-red-700', 'text-red-700', 'font-medium');
                     t.classList.add('border-transparent', 'text-gray-500');
                 });
-                this.classList.add('border-red-700', 'text-red-700');
+                this.classList.add('border-red-700', 'text-red-700', 'font-medium');
                 this.classList.remove('border-transparent', 'text-gray-500');
                 
                 // Filter products
@@ -241,8 +241,8 @@
             const formData = new FormData(this);
             const productId = document.getElementById('product-id').value;
             
-            // Send to server - in a real app this would save the product
-            fetch(`/api/products${productId ? '/' + productId : ''}`, {
+            // Send to server
+            fetch(`/api/products${productId ? '/' + productId : ''}`, { // Use API endpoint
                 method: productId ? 'PUT' : 'POST',
                 body: formData
             })
@@ -256,6 +256,7 @@
                 }
             })
             .catch(error => {
+                console.error('Error saving product:', error);
                 alert('An error occurred');
             });
         });
@@ -265,8 +266,8 @@
             button.addEventListener('click', function() {
                 const productId = this.dataset.id;
                 
-                // In a real app, fetch product details from the server
-                fetch(`/api/products/${productId}`)
+                // Fetch product details from the server
+                fetch(`/api/products/${productId}`) // Use API endpoint
                     .then(response => response.json())
                     .then(product => {
                         document.getElementById('product-modal-title').textContent = 'Edit Item';
@@ -276,15 +277,22 @@
                         document.getElementById('product-price').value = product.price;
                         document.getElementById('product-description').value = product.description;
                         
-                        document.querySelector(`input[name="available"][value="${product.available}"]`).checked = true;
+                        // Set radio button for availability
+                        const availableValue = product.available ? 'true' : 'false';
+                        document.querySelector(`input[name="available"][value="${availableValue}"]`).checked = true;
                         
                         // Show current image
-                        document.getElementById('current-image-container').classList.remove('hidden');
-                        document.getElementById('current-image').src = `/static/uploads/${product.image}`;
+                        if (product.image && product.image !== 'default.jpg') {
+                            document.getElementById('current-image-container').classList.remove('hidden');
+                            document.getElementById('current-image').src = `{{ url_for('static', filename='uploads/') }}${product.image}`;
+                        } else {
+                            document.getElementById('current-image-container').classList.add('hidden');
+                        }
                         
                         document.getElementById('product-modal').classList.remove('hidden');
                     })
                     .catch(error => {
+                        console.error('Error loading product details:', error);
                         alert('Error loading product details');
                     });
             });
@@ -296,8 +304,8 @@
                 if (confirm('Are you sure you want to delete this product?')) {
                     const productId = this.dataset.id;
                     
-                    // In a real app, send delete request to server
-                    fetch(`/api/products/${productId}`, {
+                    // Send delete request to server
+                    fetch(`/api/products/${productId}`, { // Use API endpoint
                         method: 'DELETE'
                     })
                     .then(response => response.json())
@@ -310,6 +318,7 @@
                         }
                     })
                     .catch(error => {
+                        console.error('Error deleting product:', error);
                         alert('An error occurred');
                     });
                 }
@@ -320,10 +329,11 @@
         document.querySelectorAll('.toggle-product').forEach(button => {
             button.addEventListener('click', function() {
                 const productId = this.dataset.id;
-                const currentAvailable = this.dataset.available === 'True';
+                // Correctly parse the boolean value from the data attribute
+                const currentAvailable = this.dataset.available.toLowerCase() === 'true'; 
                 
-                // In a real app, send update to server
-                fetch(`/api/products/${productId}/toggle`, {
+                // Send update to server
+                fetch(`/api/products/${productId}/toggle`, { // Use API endpoint
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -333,27 +343,29 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.reload();
+                        window.location.reload(); // Reload to see changes
                     } else {
                         alert('Error: ' + data.message);
                     }
                 })
                 .catch(error => {
+                    console.error('Error toggling availability:', error);
                     alert('An error occurred');
                 });
             });
         });
         
-        // Category management
+        // Category management - Add Category
         document.getElementById('add-category-btn').addEventListener('click', function() {
-            const categoryName = document.getElementById('new-category-name').value;
-            if (categoryName.trim() === '') {
+            const categoryNameInput = document.getElementById('new-category-name');
+            const categoryName = categoryNameInput.value.trim();
+            if (categoryName === '') {
                 alert('Please enter a category name');
                 return;
             }
             
-            // In a real app, send to server
-            fetch('/api/categories', {
+            // Send to server
+            fetch('/api/categories', { // Use API endpoint
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -364,13 +376,38 @@
             .then(data => {
                 if (data.success) {
                     alert('Category added successfully!');
-                    window.location.reload();
+                    window.location.reload(); // Reload to see new category
                 } else {
                     alert('Error: ' + data.message);
                 }
             })
             .catch(error => {
+                console.error('Error adding category:', error);
                 alert('An error occurred');
+            });
+        });
+
+        // Add event listeners for edit/delete category buttons (if needed)
+        // Example for delete:
+        document.querySelectorAll('.delete-category').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this category? Products in this category will need to be reassigned.')) {
+                    const categoryId = this.dataset.id;
+                    alert(`Delete category functionality: Call API for ID ${categoryId}.`);
+                    // fetch(`/api/categories/${categoryId}`, { method: 'DELETE' }) ...
+                }
+            });
+        });
+        // Example for edit:
+        document.querySelectorAll('.edit-category').forEach(button => {
+            button.addEventListener('click', function() {
+                const categoryId = this.dataset.id;
+                const currentName = this.dataset.name;
+                const newName = prompt(`Enter new name for category "${currentName}":`, currentName);
+                if (newName && newName.trim() !== '' && newName !== currentName) {
+                    alert(`Edit category functionality: Call API for ID ${categoryId} with new name "${newName}".`);
+                    // fetch(`/api/categories/${categoryId}`, { method: 'PUT', body: JSON.stringify({ name: newName }) ... })
+                }
             });
         });
     });

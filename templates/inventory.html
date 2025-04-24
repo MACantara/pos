@@ -159,12 +159,72 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Add ingredient button
         document.getElementById('add-ingredient-btn').addEventListener('click', function() {
-            alert("Add ingredient functionality would be implemented here");
+            // Open a modal or redirect to an add ingredient page
+            alert("Add ingredient functionality: Open modal or redirect.");
+            // Example: openIngredientModal(); 
         });
         
-        // Add stock button
+        // Add stock button (global)
         document.getElementById('add-stock-btn').addEventListener('click', function() {
-            alert("Add stock functionality would be implemented here");
+            // Open a modal to select ingredient and add stock
+            alert("Add stock functionality: Open modal.");
+            // Example: openAddStockModal();
+        });
+
+        // Edit ingredient buttons
+        document.querySelectorAll('.edit-ingredient').forEach(button => {
+            button.addEventListener('click', function() {
+                const ingredientId = this.dataset.id;
+                alert(`Edit ingredient functionality: Open modal for ID ${ingredientId}.`);
+                // Example: openIngredientModal(ingredientId);
+            });
+        });
+
+        // Add stock buttons (per ingredient)
+        document.querySelectorAll('.add-stock').forEach(button => {
+            button.addEventListener('click', function() {
+                const ingredientId = this.dataset.id;
+                const ingredientName = this.dataset.name;
+                alert(`Add stock functionality: Open modal for ${ingredientName} (ID ${ingredientId}).`);
+                // Example: openAddStockModal(ingredientId, ingredientName);
+            });
+        });
+
+        // Record usage buttons
+        document.querySelectorAll('.record-usage').forEach(button => {
+            button.addEventListener('click', function() {
+                const ingredientId = this.dataset.id;
+                const ingredientName = this.dataset.name;
+                alert(`Record usage functionality: Open modal for ${ingredientName} (ID ${ingredientId}).`);
+                // Example: openRecordUsageModal(ingredientId, ingredientName);
+            });
+        });
+
+        // Delete ingredient buttons
+        document.querySelectorAll('.delete-ingredient').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this ingredient? This cannot be undone.')) {
+                    const ingredientId = this.dataset.id;
+                    alert(`Delete ingredient functionality: Call API for ID ${ingredientId}.`);
+                    // Example: deleteIngredient(ingredientId);
+                    // fetch(`/api/ingredients/${ingredientId}`, { method: 'DELETE' }) ...
+                }
+            });
+        });
+
+        // Reorder ingredient buttons
+        document.querySelectorAll('.reorder-ingredient').forEach(button => {
+            button.addEventListener('click', function() {
+                const ingredientId = this.dataset.id;
+                alert(`Reorder functionality: Notify manager or create purchase order for ID ${ingredientId}.`);
+                // This might involve an API call or just a UI notification
+            });
+        });
+
+        // Manage suppliers button
+        document.getElementById('manage-suppliers').addEventListener('click', function() {
+            alert("Manage suppliers functionality: Open modal or redirect.");
+            // Example: openSupplierModal();
         });
         
         // Search functionality
@@ -182,5 +242,13 @@
             });
         });
     });
+
+    // Placeholder functions for modal operations (implement these)
+    // function openIngredientModal(id = null) { /* ... */ }
+    // function openAddStockModal(id = null, name = null) { /* ... */ }
+    // function openRecordUsageModal(id, name) { /* ... */ }
+    // function openSupplierModal() { /* ... */ }
+    // function deleteIngredient(id) { /* fetch call */ }
+
 </script>
 {% endblock scripts %}

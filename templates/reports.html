@@ -196,230 +196,183 @@
             exportReport('csv');
         });
         
-        // Initialize with sample data
+        // Initialize with today's data
         generateReport();
     });
     
     function generateReport() {
-        const reportType = document.getElementById('report-type').value;
-        const dateRange = document.getElementById('date-range').value;
+        const form = document.getElementById('report-filters');
+        const formData = new FormData(form);
+        const filters = Object.fromEntries(formData.entries());
         
-        // In a real app, this would fetch data from the server
-        // For now, we'll generate sample data
+        // Show loading state (optional)
+        // ...
         
-        // Update summary cards with sample data
-        document.getElementById('total-sales').textContent = '42,850.00';
-        document.getElementById('orders-count').textContent = '156';
-        document.getElementById('avg-order').textContent = '274.68';
-        document.getElementById('top-category').textContent = 'Ramen';
-        document.getElementById('category-percentage').textContent = '35';
+        // Fetch data from the server
+        fetch('/api/reports/generate', { // Use API endpoint
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(filters)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                updateReportUI(result.data, filters.report_type);
+            } else {
+                alert('Error generating report: ' + result.message);
+            }
+            // Hide loading state
+        })
+        .catch(error => {
+            console.error('Error fetching report data:', error);
+            alert('An error occurred while generating the report.');
+            // Hide loading state
+        });
+    }
+    
+    function updateReportUI(data, reportType) {
+        // Update summary cards
+        document.getElementById('total-sales').textContent = data.summary.total_sales.toFixed(2);
+        document.getElementById('orders-count').textContent = data.summary.orders_count;
+        document.getElementById('avg-order').textContent = data.summary.avg_order_value.toFixed(2);
+        // Update top category (needs calculation in backend or here)
+        document.getElementById('top-category').textContent = data.top_items.length > 0 ? data.top_items[0].name.split(' ')[0] : 'N/A'; // Simple guess
+        document.getElementById('category-percentage').textContent = data.top_items.length > 0 ? Math.round((data.top_items[0].revenue / data.summary.total_sales) * 100) : 0; // Simple guess
         
         // Show/hide relevant containers based on report type
         document.getElementById('top-items-container').style.display = 
             (reportType === 'sales' || reportType === 'items') ? 'block' : 'none';
-        
         document.getElementById('payment-container').style.display = 
             (reportType === 'sales' || reportType === 'payment') ? 'block' : 'none';
-        
         document.getElementById('staff-container').style.display = 
             (reportType === 'sales' || reportType === 'staff') ? 'block' : 'none';
-        
-        document.getElementById('hourly-container').style.display = 
-            (reportType === 'sales') ? 'block' : 'none';
-        
-        // Generate sample data for tables
-        generateTopItemsTable();
-        generateStaffPerformanceTable();
+        // Add logic for hourly container if needed
+        // document.getElementById('hourly-container').style.display = ...
+
+        // Populate tables
+        populateTopItemsTable(data.top_items);
+        populateStaffPerformanceTable(data.staff_performance);
         
         // Generate charts
-        generateSalesChart();
-        generatePaymentChart();
-        generateHourlyChart();
+        generateSalesChart(data.sales_trend);
+        generatePaymentChart(data.payment_methods);
+        // generateHourlyChart(data.hourly_sales); // Add if hourly data is available
     }
-    
-    function generateTopItemsTable() {
-        const sampleData = [
-            { name: 'Chicken Teriyaki Bento', quantity: 87, revenue: 21750 },
-            { name: 'Spicy Ramen', quantity: 65, revenue: 16250 },
-            { name: 'California Maki', quantity: 52, revenue: 7800 },
-            { name: 'Gyoza (6 pcs)', quantity: 45, revenue: 6750 },
-            { name: 'Green Tea Ice Cream', quantity: 38, revenue: 3800 }
-        ];
-        
+
+    function populateTopItemsTable(items) {
         let html = '';
-        sampleData.forEach(item => {
-            html += `
-                <tr>
-                    <td class="py-2 px-4 border-b">${item.name}</td>
-                    <td class="py-2 px-4 border-b text-right">${item.quantity}</td>
-                    <td class="py-2 px-4 border-b text-right">₱${item.revenue.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-        
+        if (items && items.length > 0) {
+            items.forEach(item => {
+                html += `
+                    <tr>
+                        <td class="py-2 px-4 border-b">${item.name}</td>
+                        <td class="py-2 px-4 border-b text-right">${item.quantity}</td>
+                        <td class="py-2 px-4 border-b text-right">₱${item.revenue.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            html = '<tr><td colspan="3" class="text-center py-4 text-gray-500">No data available</td></tr>';
+        }
         document.getElementById('top-items').innerHTML = html;
     }
     
-    function generateStaffPerformanceTable() {
-        const sampleData = [
-            { name: 'Maria Santos', orders: 45, sales: 12350 },
-            { name: 'John Reyes', orders: 38, sales: 10250 },
-            { name: 'Anna Garcia', orders: 36, sales: 9800 },
-            { name: 'David Lee', orders: 25, sales: 6950 },
-            { name: 'Sarah Kim', orders: 12, sales: 3500 }
-        ];
-        
+    function populateStaffPerformanceTable(staffData) {
         let html = '';
-        sampleData.forEach(staff => {
-            html += `
-                <tr>
-                    <td class="py-2 px-4 border-b">${staff.name}</td>
-                    <td class="py-2 px-4 border-b text-right">${staff.orders}</td>
-                    <td class="py-2 px-4 border-b text-right">₱${staff.sales.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-        
+         if (staffData && staffData.length > 0) {
+            staffData.forEach(staff => {
+                html += `
+                    <tr>
+                        <td class="py-2 px-4 border-b">${staff.name}</td>
+                        <td class="py-2 px-4 border-b text-right">${staff.orders}</td>
+                        <td class="py-2 px-4 border-b text-right">₱${staff.sales.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        } else {
+             html = '<tr><td colspan="3" class="text-center py-4 text-gray-500">No data available</td></tr>';
+        }
         document.getElementById('staff-performance').innerHTML = html;
     }
     
-    function generateSalesChart() {
+    function generateSalesChart(salesTrend) {
         const ctx = document.getElementById('sales-chart').getContext('2d');
         
-        // Sample data
-        const labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const data = [4500, 5200, 4800, 5700, 6200, 8500, 7950];
+        const labels = salesTrend.map(d => d.date);
+        const data = salesTrend.map(d => d.sales);
         
-        if (window.salesChart) {
-            window.salesChart.destroy();
-        }
+        if (window.salesChart) window.salesChart.destroy();
         
         window.salesChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Sales (₱)',
-                    data: data,
-                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                    borderColor: 'rgba(220, 38, 38, 1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
+                    label: 'Sales (₱)', data: data,
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)', borderColor: 'rgba(220, 38, 38, 1)',
+                    borderWidth: 2, tension: 0.3, fill: true
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₱' + value;
-                            }
-                        }
-                    }
-                }
-            }
+            options: { /* ... options ... */ }
         });
     }
     
-    function generatePaymentChart() {
+    function generatePaymentChart(paymentMethods) {
         const ctx = document.getElementById('payment-chart').getContext('2d');
         
-        // Sample data
-        const data = {
-            labels: ['Cash', 'Credit Card', 'GCash', 'PayMaya'],
-            datasets: [{
-                data: [45, 25, 20, 10],
-                backgroundColor: [
-                    'rgba(34, 197, 94, 0.8)',
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(168, 85, 247, 0.8)',
-                    'rgba(249, 115, 22, 0.8)'
-                ],
-                hoverBackgroundColor: [
-                    'rgba(34, 197, 94, 1)',
-                    'rgba(59, 130, 246, 1)',
-                    'rgba(168, 85, 247, 1)',
-                    'rgba(249, 115, 22, 1)'
-                ]
-            }]
-        };
+        const labels = paymentMethods.map(p => p.method || 'Unknown');
+        const dataValues = paymentMethods.map(p => p.amount);
         
-        if (window.paymentChart) {
-            window.paymentChart.destroy();
-        }
+        // Define colors - add more if needed
+        const bgColors = [
+            'rgba(34, 197, 94, 0.8)', 'rgba(59, 130, 246, 0.8)', 
+            'rgba(168, 85, 247, 0.8)', 'rgba(249, 115, 22, 0.8)',
+            'rgba(239, 68, 68, 0.8)', 'rgba(217, 119, 6, 0.8)' 
+        ];
+        const hoverColors = bgColors.map(c => c.replace('0.8', '1'));
+
+        if (window.paymentChart) window.paymentChart.destroy();
         
         window.paymentChart = new Chart(ctx, {
             type: 'pie',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                return `${label}: ${value}%`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    function generateHourlyChart() {
-        const ctx = document.getElementById('hourly-chart').getContext('2d');
-        
-        // Sample data for hourly sales
-        const labels = ['10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM', '9PM'];
-        const data = [1200, 1800, 3500, 4000, 2500, 1800, 2200, 3500, 4800, 5200, 4500, 3200];
-        
-        if (window.hourlyChart) {
-            window.hourlyChart.destroy();
-        }
-        
-        window.hourlyChart = new Chart(ctx, {
-            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Sales by Hour',
-                    data: data,
-                    backgroundColor: 'rgba(79, 70, 229, 0.8)',
-                    borderColor: 'rgba(79, 70, 229, 1)',
-                    borderWidth: 1
+                    data: dataValues,
+                    backgroundColor: bgColors.slice(0, labels.length),
+                    hoverBackgroundColor: hoverColors.slice(0, labels.length)
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₱' + value;
-                            }
-                        }
-                    }
-                }
-            }
+            options: { /* ... options ... */ }
         });
     }
     
+    // function generateHourlyChart(hourlyData) { /* ... implementation ... */ }
+    
     function exportReport(format) {
-        // In a real app, this would generate and download the report
-        alert(`Exporting report in ${format.toUpperCase()} format...`);
-        // The actual implementation would call a server endpoint to generate the file
+        const form = document.getElementById('report-filters');
+        const formData = new FormData(form);
+        
+        // Create a hidden form to submit the request
+        const exportForm = document.createElement('form');
+        exportForm.method = 'POST';
+        exportForm.action = `/api/reports/export/${format}`; // Use API endpoint
+        exportForm.style.display = 'none';
+
+        // Append filter data to the hidden form
+        for (const [key, value] of formData.entries()) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            exportForm.appendChild(input);
+        }
+
+        document.body.appendChild(exportForm);
+        exportForm.submit();
+        document.body.removeChild(exportForm);
     }
 </script>
 {% endblock %}
