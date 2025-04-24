@@ -288,14 +288,86 @@
         </button>
     </div>
 </div>
+
+<!-- Generic Alert Modal -->
+<div id="alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="alert-modal-title">Notification</h2>
+            <button onclick="closeAlertModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p id="alert-modal-message" class="mb-4">This is the alert message.</p>
+        <div class="flex justify-end">
+            <button onclick="closeAlertModal()" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Generic Confirm Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="confirm-modal-title">Confirmation</h2>
+             <!-- No close button on top right for confirm -->
+        </div>
+        <p id="confirm-modal-message" class="mb-6">Are you sure?</p>
+        <div class="flex justify-end space-x-3">
+            <button id="confirm-modal-no" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400">
+                No
+            </button>
+            <button id="confirm-modal-yes" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+                Yes
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+    // --- Alert Modal ---
+    function showAlert(message, title = 'Notification') {
+        document.getElementById('alert-modal-title').textContent = title;
+        document.getElementById('alert-modal-message').textContent = message;
+        document.getElementById('alert-modal').classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+        document.getElementById('alert-modal').classList.add('hidden');
+    }
+
+    // --- Confirm Modal ---
+    let confirmCallback = null; // Store the function to call on 'Yes'
+
+    function showConfirm(message, onConfirm, title = 'Confirmation') {
+        document.getElementById('confirm-modal-title').textContent = title;
+        document.getElementById('confirm-modal-message').textContent = message;
+        confirmCallback = onConfirm; // Set the callback
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        confirmCallback = null; // Clear callback
+    }
+
     let currentOrder = [];
     let selectedProduct = null;
-    
+
     document.addEventListener('DOMContentLoaded', function() {
+        // Confirm modal button listeners
+        document.getElementById('confirm-modal-no').addEventListener('click', closeConfirmModal);
+        document.getElementById('confirm-modal-yes').addEventListener('click', () => {
+            if (typeof confirmCallback === 'function') {
+                confirmCallback(); // Execute the stored callback
+            }
+            closeConfirmModal(); // Close modal after action
+        });
+
         // Order type selection
         document.querySelectorAll('.order-type-option').forEach(option => {
             option.addEventListener('click', function() {
@@ -407,15 +479,20 @@
         // Clear order
         document.getElementById('clear-order').addEventListener('click', function() {
             if (currentOrder.length > 0) {
-                if (confirm('Are you sure you want to clear the current order?')) {
+                showConfirm('Are you sure you want to clear the current order?', function() {
+                    // This runs if 'Yes' is clicked
                     currentOrder = [];
                     updateOrderSummary();
-                }
+                });
             }
         });
         
         // Place order
         document.getElementById('place-order').addEventListener('click', function() {
+            if (currentOrder.length === 0) {
+                showAlert('Cannot place an empty order.', 'Order Error');
+                return;
+            }
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
             const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
             
@@ -462,13 +539,11 @@
             })
             .then(data => {
                 if (data.success) {
-                    // Show success message and reset order
-                    alert('Order #' + data.order_number + ' placed successfully!');
+                    showAlert('Order #' + data.order_number + ' placed successfully!', 'Success');
                     currentOrder = [];
                     updateOrderSummary();
                 } else {
-                    // Use the error message from the server response
-                    alert('Failed to place order: ' + data.message);
+                    showAlert('Failed to place order: ' + data.message, 'Error');
                 }
                 
                 // Reset button
@@ -476,7 +551,7 @@
                 this.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Pay';
             })
             .catch(error => {
-                alert('An error occurred: ' + error.message);
+                showAlert('An error occurred: ' + error.message, 'Error');
                 console.error('Error:', error);
                 
                 // Reset button

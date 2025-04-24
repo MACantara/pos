@@ -123,8 +123,37 @@
     </div>
 </div>
 
+<!-- Generic Alert Modal -->
+<div id="alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="alert-modal-title">Notification</h2>
+            <button onclick="closeAlertModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p id="alert-modal-message" class="mb-4">This is the alert message.</p>
+        <div class="flex justify-end">
+            <button onclick="closeAlertModal()" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
 {% block scripts %}
 <script>
+    // --- Alert Modal ---
+    function showAlert(message, title = 'Notification') {
+        document.getElementById('alert-modal-title').textContent = title;
+        document.getElementById('alert-modal-message').textContent = message;
+        document.getElementById('alert-modal').classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+        document.getElementById('alert-modal').classList.add('hidden');
+    }
+
     const today = new Date("{{ today.isoformat() }}"); // Get today's date from backend
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -224,14 +253,20 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(customerId ? 'Customer updated successfully!' : 'Customer added successfully!');
-                    window.location.reload();
+                    showAlert(customerId ? 'Customer updated successfully!' : 'Customer added successfully!', 'Success');
+                     // Optionally reload after closing the alert
+                    document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                        closeAlertModal();
+                        window.location.reload();
+                    };
+                    // closeCustomerModal(); // Close form modal
                 } else {
-                    alert('Error: ' + data.message);
+                    showAlert('Error: ' + data.message, 'Error');
                 }
             })
             .catch(error => {
-                alert('An error occurred');
+                console.error('Error saving customer:', error);
+                showAlert('An error occurred while saving the customer.', 'Error');
             });
         });
         
@@ -248,14 +283,20 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Points added successfully!');
-                    window.location.reload();
+                    showAlert('Points added successfully!', 'Success');
+                     // Optionally reload after closing the alert
+                    document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                        closeAlertModal();
+                        window.location.reload();
+                    };
+                    // closePointsModal(); // Close points modal
                 } else {
-                    alert('Error: ' + data.message);
+                    showAlert('Error: ' + data.message, 'Error');
                 }
             })
             .catch(error => {
-                alert('An error occurred');
+                console.error('Error adding points:', error);
+                showAlert('An error occurred while adding points.', 'Error');
             });
         });
         
@@ -270,13 +311,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert(data.message || 'Birthday promo sent!');
+                        showAlert(data.message || 'Birthday promo sent!', 'Success');
                     } else {
-                        alert('Error: ' + data.message);
+                        showAlert('Error: ' + data.message, 'Error');
                     }
                 })
                 .catch(error => {
-                    alert('An error occurred');
+                    console.error('Error sending promo:', error);
+                    showAlert('An error occurred while sending the promo.', 'Error');
                 });
             });
         });

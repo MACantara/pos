@@ -157,6 +157,25 @@
         </div>
     </div>
 </div>
+
+<!-- Generic Alert Modal -->
+<div id="alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="alert-modal-title">Notification</h2>
+            <button onclick="closeAlertModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p id="alert-modal-message" class="mb-4">This is the alert message.</p>
+        <div class="flex justify-end">
+            <button onclick="closeAlertModal()" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -243,17 +262,29 @@
                 // Reload the page to show updated status
                 window.location.reload();
             } else {
-                alert('Failed to update order status');
+                showAlert('Failed to update order status', 'Error');
             }
         })
         .catch(error => {
-            alert('An error occurred while updating order status');
+            console.error('Error updating status:', error);
+            showAlert('An error occurred while updating order status', 'Error');
         });
     }
     
     function printReceipt(orderId) {
         // Open the receipt page in a new tab
         window.open("{{ url_for('orders.view_receipt', order_id=0) }}".replace('0', orderId), '_blank');
+    }
+
+    // --- Alert Modal ---
+    function showAlert(message, title = 'Notification') {
+        document.getElementById('alert-modal-title').textContent = title;
+        document.getElementById('alert-modal-message').textContent = message;
+        document.getElementById('alert-modal').classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+        document.getElementById('alert-modal').classList.add('hidden');
     }
 </script>
 {% endblock %}
