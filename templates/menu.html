@@ -199,6 +199,44 @@
         </div>
     </div>
 </div>
+
+<!-- Generic Alert Modal -->
+<div id="alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="alert-modal-title">Notification</h2>
+            <button onclick="closeAlertModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p id="alert-modal-message" class="mb-4">This is the alert message.</p>
+        <div class="flex justify-end">
+            <button onclick="closeAlertModal()" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Generic Confirm Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="confirm-modal-title">Confirmation</h2>
+             <!-- No close button on top right for confirm -->
+        </div>
+        <p id="confirm-modal-message" class="mb-6">Are you sure?</p>
+        <div class="flex justify-end space-x-3">
+            <button id="confirm-modal-no" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400">
+                No
+            </button>
+            <button id="confirm-modal-yes" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+                Yes
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -249,15 +287,18 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(productId ? 'Product updated successfully!' : 'Product added successfully!');
-                    window.location.reload();
+                    showAlert(productId ? 'Product updated successfully!' : 'Product added successfully!', 'Success');
+                    document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                         closeAlertModal();
+                         window.location.reload();
+                    };
                 } else {
-                    alert('Error: ' + data.message);
+                    showAlert('Error: ' + data.message, 'Error');
                 }
             })
             .catch(error => {
                 console.error('Error saving product:', error);
-                alert('An error occurred');
+                showAlert('An error occurred while saving the product.', 'Error');
             });
         });
         
@@ -293,7 +334,7 @@
                     })
                     .catch(error => {
                         console.error('Error loading product details:', error);
-                        alert('Error loading product details');
+                        showAlert('Error loading product details', 'Error');
                     });
             });
         });
@@ -301,27 +342,30 @@
         // Delete product buttons
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', function() {
-                if (confirm('Are you sure you want to delete this product?')) {
-                    const productId = this.dataset.id;
-                    
-                    // Send delete request to server
-                    fetch(`/api/products/${productId}`, { // Use API endpoint
+                const productId = this.dataset.id;
+                showConfirm('Are you sure you want to delete this product?', function() {
+                    // This runs if 'Yes' is clicked
+                    fetch(`/api/products/${productId}`, {
                         method: 'DELETE'
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('Product deleted successfully!');
-                            window.location.reload();
+                            showAlert('Product deleted successfully!', 'Success');
+                             // Optionally reload after closing the alert
+                            document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                                closeAlertModal();
+                                window.location.reload();
+                            };
                         } else {
-                            alert('Error: ' + data.message);
+                            showAlert('Error: ' + data.message, 'Error');
                         }
                     })
                     .catch(error => {
                         console.error('Error deleting product:', error);
-                        alert('An error occurred');
+                        showAlert('An error occurred while deleting the product.', 'Error');
                     });
-                }
+                });
             });
         });
         
@@ -345,12 +389,12 @@
                     if (data.success) {
                         window.location.reload(); // Reload to see changes
                     } else {
-                        alert('Error: ' + data.message);
+                        showAlert('Error: ' + data.message, 'Error');
                     }
                 })
                 .catch(error => {
                     console.error('Error toggling availability:', error);
-                    alert('An error occurred');
+                    showAlert('An error occurred while updating availability.', 'Error');
                 });
             });
         });
@@ -360,7 +404,7 @@
             const categoryNameInput = document.getElementById('new-category-name');
             const categoryName = categoryNameInput.value.trim();
             if (categoryName === '') {
-                alert('Please enter a category name');
+                showAlert('Please enter a category name', 'Input Required');
                 return;
             }
             
@@ -375,15 +419,19 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Category added successfully!');
-                    window.location.reload(); // Reload to see new category
+                    showAlert('Category added successfully!', 'Success');
+                     // Optionally reload after closing the alert
+                    document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                        closeAlertModal();
+                        window.location.reload();
+                    };
                 } else {
-                    alert('Error: ' + data.message);
+                    showAlert('Error: ' + data.message, 'Error');
                 }
             })
             .catch(error => {
                 console.error('Error adding category:', error);
-                alert('An error occurred');
+                showAlert('An error occurred while adding the category.', 'Error');
             });
         });
 
@@ -431,5 +479,175 @@
     function closeCategoryModal() {
         document.getElementById('category-modal').classList.add('hidden');
     }
+
+    // --- Alert Modal ---
+    function showAlert(message, title = 'Notification') {
+        document.getElementById('alert-modal-title').textContent = title;
+        document.getElementById('alert-modal-message').textContent = message;
+        document.getElementById('alert-modal').classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+        document.getElementById('alert-modal').classList.add('hidden');
+    }
+
+    // --- Confirm Modal ---
+    let confirmCallback = null; // Store the function to call on 'Yes'
+
+    function showConfirm(message, onConfirm, title = 'Confirmation') {
+        document.getElementById('confirm-modal-title').textContent = title;
+        document.getElementById('confirm-modal-message').textContent = message;
+        confirmCallback = onConfirm; // Set the callback
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        confirmCallback = null; // Clear callback
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Confirm modal button listeners
+        document.getElementById('confirm-modal-no').addEventListener('click', closeConfirmModal);
+        document.getElementById('confirm-modal-yes').addEventListener('click', () => {
+            if (typeof confirmCallback === 'function') {
+                confirmCallback(); // Execute the stored callback
+            }
+            closeConfirmModal(); // Close modal after action
+        });
+
+        // ... existing event listeners for add product, manage categories ...
+
+        // Product form submission
+        document.getElementById('product-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const productId = document.getElementById('product-id').value;
+
+            fetch(`/api/products${productId ? '/' + productId : ''}`, {
+                method: productId ? 'PUT' : 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Use showAlert instead of alert
+                    showAlert(productId ? 'Product updated successfully!' : 'Product added successfully!', 'Success');
+                    // Optionally reload after closing the alert
+                    document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                         closeAlertModal();
+                         window.location.reload();
+                    };
+                    // closeProductModal(); // Close the form modal immediately or after alert
+                } else {
+                    showAlert('Error: ' + data.message, 'Error');
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting product form:', error);
+                showAlert('An error occurred while saving the product.', 'Error');
+            });
+        });
+
+        // Edit product buttons
+        // ... (fetch logic remains the same) ...
+
+        // Delete product buttons
+        document.querySelectorAll('.delete-product').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.id;
+                showConfirm('Are you sure you want to delete this product?', function() {
+                    // This runs if 'Yes' is clicked
+                    fetch(`/api/products/${productId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('Product deleted successfully!', 'Success');
+                             // Optionally reload after closing the alert
+                            document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                                closeAlertModal();
+                                window.location.reload();
+                            };
+                        } else {
+                            showAlert('Error: ' + data.message, 'Error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting product:', error);
+                        showAlert('An error occurred while deleting the product.', 'Error');
+                    });
+                });
+            });
+        });
+
+        // Toggle product availability buttons
+        document.querySelectorAll('.toggle-product').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.id;
+                const currentAvailable = this.dataset.available === 'True';
+
+                fetch(`/api/products/${productId}/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ available: !currentAvailable })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // No alert needed, just reload
+                        window.location.reload();
+                    } else {
+                        showAlert('Error: ' + data.message, 'Error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error toggling product:', error);
+                    showAlert('An error occurred while updating availability.', 'Error');
+                });
+            });
+        });
+
+        // Category management
+        document.getElementById('add-category-btn').addEventListener('click', function() {
+            const categoryName = document.getElementById('new-category-name').value;
+            if (categoryName.trim() === '') {
+                showAlert('Please enter a category name', 'Input Required');
+                return;
+            }
+
+            fetch('/api/categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: categoryName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Category added successfully!', 'Success');
+                     // Optionally reload after closing the alert
+                    document.getElementById('alert-modal').querySelector('button').onclick = () => {
+                        closeAlertModal();
+                        window.location.reload();
+                    };
+                    // closeCategoryModal(); // Close the form modal immediately or after alert
+                } else {
+                    showAlert('Error: ' + data.message, 'Error');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding category:', error);
+                showAlert('An error occurred while adding the category.', 'Error');
+            });
+        });
+    });
+
+    // ... existing filterProducts, closeProductModal, closeCategoryModal functions ...
+
 </script>
 {% endblock %}
