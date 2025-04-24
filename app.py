@@ -49,6 +49,18 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
         print("Admin user created")
+    
+    # Create cashier user if not exists
+    if not User.query.filter_by(username='cashier').first():
+        cashier = User(
+            username='cashier',
+            password=generate_password_hash('cashier123'),
+            name='Cashier User',
+            role='cashier'
+        )
+        db.session.add(cashier)
+        db.session.commit()
+        print("Cashier user created")
 
 if __name__ == '__main__':
     app.run(debug=True)
