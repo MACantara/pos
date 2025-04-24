@@ -43,7 +43,7 @@
                 {% for product in products %}
                 <tr data-category="{{ product.category_id }}">
                     <td class="py-3 px-4">
-                        <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="h-12 w-12 object-cover rounded">
+                        <img src="{{ url_for('static', filename='img/' + product.image) }}" alt="{{ product.name }}" class="h-12 w-12 object-cover rounded">
                     </td>
                     <td class="py-3 px-4">
                         <div class="font-medium text-gray-900">{{ product.name }}</div>
