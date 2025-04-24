@@ -1,39 +1,69 @@
 {% extends "base.html" %}
 
-{% block title %}Customer Management{% endblock %}
+{% block title %}Customer Card Management{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold">Customers</h1>
+        <h1 class="text-2xl font-bold">Customer Cards</h1>
         <button id="add-customer-btn" class="bg-blue-500 text-white px-4 py-2 rounded">Add Customer</button>
     </div>
     <div class="mb-4">
-        <input type="text" id="search-customers" class="border rounded px-4 py-2 w-full" placeholder="Search customers...">
+        <input type="text" id="search-customers" class="border rounded px-4 py-2 w-full" placeholder="Search customers by name or phone...">
     </div>
-    <table class="min-w-full bg-white">
-        <thead>
-            <tr>
-                <th class="py-2 px-4 border-b">Name</th>
-                <th class="py-2 px-4 border-b">Contact</th>
-                <th class="py-2 px-4 border-b">Actions</th>
-            </tr>
-        </thead>
-        <tbody id="customers-table-body">
-            {% for customer in customers %}
-            <tr>
-                <td class="py-2 px-4 border-b">{{ customer.name }}</td>
-                <td class="py-2 px-4 border-b">{{ customer.phone }}</td>
-                <td class="py-2 px-4 border-b">
-                    <button class="edit-customer bg-yellow-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}">Edit</button>
-                    <button class="view-customer bg-green-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}">View</button>
-                    <button class="add-points bg-purple-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}" data-name="{{ customer.name }}">Add Points</button>
-                    <button class="send-promo bg-red-500 text-white px-2 py-1 rounded" data-id="{{ customer.id }}">Send Birthday Promo</button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    
+    <!-- Card Grid replaces table -->
+    <div id="customers-card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {% for customer in customers %}
+        <div class="customer-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow" 
+             data-name="{{ customer.name | lower }}" data-phone="{{ customer.phone | lower }}" data-id="{{ customer.id }}">
+            <div class="bg-gray-100 p-4 border-b">
+                <h3 class="text-lg font-semibold truncate">{{ customer.name }}</h3>
+                <p class="text-sm text-gray-600">{{ customer.phone }}</p>
+                {% if customer.birthday %}
+                    <div class="flex items-center mt-1 birthday-display" data-birthday="{{ customer.birthday }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
+                        </svg>
+                        <span class="text-xs text-pink-500 birthday-text"></span>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="p-4">
+                <!-- Points display prominently with card icon -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span class="text-sm font-medium">Card Points:</span>
+                    </div>
+                    <span class="text-lg font-bold text-purple-600">{{ customer.rewards_points|default(0) }}</span>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="edit-customer bg-yellow-500 text-white px-2 py-1 rounded flex-1 text-sm" data-id="{{ customer.id }}">Edit</button>
+                    <button class="view-customer bg-green-500 text-white px-2 py-1 rounded flex-1 text-sm" data-id="{{ customer.id }}">View</button>
+                </div>
+                <div class="flex space-x-2 mt-2">
+                    <button class="add-points bg-purple-600 text-white px-2 py-1 rounded flex-1 text-sm flex items-center justify-center" 
+                            data-id="{{ customer.id }}" data-name="{{ customer.name }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add Points
+                    </button>
+                    <button class="send-promo bg-pink-500 text-white px-2 py-1 rounded flex-1 text-sm flex items-center justify-center" 
+                            data-id="{{ customer.id }}" data-has-birthday="{{ 'true' if customer.birthday else 'false' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
+                        </svg>
+                        Birthday
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
 <!-- Customer Modal -->
@@ -73,24 +103,41 @@
 <!-- Points Modal -->
 <div id="points-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
     <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 class="text-xl font-bold mb-4">Add Points</h2>
+        <h2 class="text-xl font-bold mb-4">Customer Card Points</h2>
         <form id="points-form">
             <input type="hidden" id="points-customer-id" name="customer_id">
             <div class="mb-4">
-                <p class="text-sm text-gray-600">Customer</p>
-                <p id="customer-name-display" class="text-lg font-bold"></p>
+                <p class="text-sm text-gray-600">Card Holder</p>
+                <p id="points-customer-name" class="text-lg font-bold"></p>
             </div>
             <div class="mb-4">
-                <p class="text-sm text-gray-600">Current Points</p>
-                <p id="current-points" class="text-lg font-bold"></p>
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <p class="text-sm text-gray-600">Current Card Points</p>
+                </div>
+                <p id="current-points" class="text-3xl font-bold text-purple-600 ml-8"></p>
             </div>
-            <div class="mb-4">
+            <div class="mb-6">
                 <label for="points-to-add" class="block text-sm font-medium text-gray-700">Points to Add</label>
-                <input type="number" id="points-to-add" name="points" class="border rounded px-4 py-2 w-full" value="1" min="1">
+                <div class="flex items-center mt-1">
+                    <button type="button" id="decrease-points" class="bg-gray-200 px-3 py-2 rounded-l">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                        </svg>
+                    </button>
+                    <input type="number" id="points-to-add" name="points" class="border-y text-center px-4 py-2 w-full" value="1" min="1">
+                    <button type="button" id="increase-points" class="bg-gray-200 px-3 py-2 rounded-r">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="flex justify-end">
                 <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded mr-2" onclick="closePointsModal()">Cancel</button>
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Points</button>
+                <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded">Add Points</button>
             </div>
         </form>
     </div>
@@ -99,13 +146,25 @@
 <!-- View Customer Modal -->
 <div id="view-customer-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
     <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 class="text-xl font-bold mb-4">Customer Details</h2>
+        <h2 class="text-xl font-bold mb-4">Customer Card Details</h2>
         <div class="mb-4">
-            <p class="text-sm text-gray-600">Name</p>
+            <p class="text-sm text-gray-600">Card Holder</p>
             <p id="view-customer-name" class="text-lg font-bold"></p>
         </div>
+        
+        <!-- Card points prominently displayed -->
+        <div class="bg-purple-100 rounded-lg p-4 mb-4 flex items-center justify-between">
+            <div>
+                <p class="text-sm text-purple-700">Card Points Balance</p>
+                <p id="view-points" class="text-2xl font-bold text-purple-700"></p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+        </div>
+        
         <div id="customer-details" class="mb-4"></div>
-        <h3 class="text-lg font-bold mb-2">Purchase History</h3>
+        <h3 class="text-lg font-bold mb-2">Purchase History & Points Earned</h3>
         <table class="min-w-full bg-white">
             <thead>
                 <tr>
@@ -118,7 +177,7 @@
             <tbody id="purchase-history"></tbody>
         </table>
         <div class="flex justify-end mt-4">
-            <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded" onclick="closeViewModal()">Close</button>
+            <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded" onclick="closeViewCustomerModal()">Close</button>
         </div>
     </div>
 </div>
@@ -141,6 +200,47 @@
     </div>
 </div>
 
+<!-- Birthday Promo Modal -->
+<div id="birthday-promo-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">Send Birthday Promotion</h2>
+        <div id="promo-content">
+            <div class="mb-4 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-24 w-24 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
+                </svg>
+            </div>
+            <p id="promo-customer-name" class="text-lg font-bold text-center mb-2"></p>
+            <p id="promo-birthday-date" class="text-sm text-center text-gray-600 mb-4"></p>
+            <p class="mb-4">Would you like to send a birthday promotion message to this customer?</p>
+            <div id="promo-message-container" class="mb-4">
+                <div class="mb-2">
+                    <label for="promo-message" class="block text-sm font-medium text-gray-700">Custom Message (Optional)</label>
+                </div>
+                <textarea id="promo-message" class="w-full border rounded p-2 h-24" placeholder="Enter a custom birthday message or leave blank to use the default message..."></textarea>
+            </div>
+            <div id="no-birthday-warning" class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 hidden">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            This customer doesn't have a birthday set. Please edit the customer profile to add a birthday.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end">
+            <button type="button" id="close-promo-btn" class="bg-gray-500 text-white px-4 py-2 rounded mr-2" onclick="closeBirthdayPromoModal()">Cancel</button>
+            <button type="button" id="send-promo-btn" class="bg-pink-500 text-white px-4 py-2 rounded">Send Promotion</button>
+        </div>
+    </div>
+</div>
+
 {% block scripts %}
 <script>
     // --- Alert Modal ---
@@ -153,16 +253,50 @@
     function closeAlertModal() {
         document.getElementById('alert-modal').classList.add('hidden');
     }
+    
+    // Helper function to format date as Month Day
+    function formatBirthday(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const options = { month: 'short', day: 'numeric' };
+        return date.toLocaleDateString(undefined, options);
+    }
+    
+    // Helper function to update card UI with new points value
+    function updateCardPoints(customerId, newPoints) {
+        const customerCard = document.querySelector(`.customer-card[data-id="${customerId}"]`);
+        if (customerCard) {
+            const pointsDisplay = customerCard.querySelector('.text-lg.font-bold.text-purple-600');
+            if (pointsDisplay) {
+                pointsDisplay.textContent = newPoints;
+                
+                // Visual feedback - brief highlight effect
+                pointsDisplay.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
+                setTimeout(() => {
+                    pointsDisplay.classList.remove('bg-yellow-100');
+                }, 1500);
+            }
+        }
+    }
 
     const today = new Date("{{ today.isoformat() }}"); // Get today's date from backend
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Format all birthday displays
+        document.querySelectorAll('.birthday-display').forEach(element => {
+            const birthday = element.dataset.birthday;
+            if (birthday) {
+                const formattedDate = formatBirthday(birthday);
+                element.querySelector('.birthday-text').textContent = formattedDate;
+            }
+        });
+    
         // Add customer button
         document.getElementById('add-customer-btn').addEventListener('click', function() {
-            document.getElementById('customer-modal-title').textContent = 'Add Customer';
+            document.getElementById('customer-modal-title').textContent = 'Add Customer Card';
             document.getElementById('customer-form').reset();
             document.getElementById('customer-id').value = '';
-            document.getElementById('rewards-points-field').style.display = 'block'; // Show points field for new customer
+            document.getElementById('points-field').style.display = 'block'; 
             document.getElementById('customer-modal').classList.remove('hidden');
         });
 
@@ -173,20 +307,32 @@
                 
                 // Fetch customer details
                 fetch(`/api/customers/${customerId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(customer => {
-                        document.getElementById('customer-modal-title').textContent = 'Edit Customer';
+                        console.log("Editing customer with points:", customer.rewards_points); // Debug logging
+                        
+                        document.getElementById('customer-modal-title').textContent = 'Edit Customer Card';
                         document.getElementById('customer-id').value = customer.id;
                         document.getElementById('customer-name').value = customer.name;
                         document.getElementById('customer-phone').value = customer.phone || '';
                         document.getElementById('customer-email').value = customer.email || '';
                         document.getElementById('customer-birthday').value = customer.birthday || '';
-                        document.getElementById('rewards-points-field').style.display = 'none'; // Hide points field when editing
+                        
+                        // Ensure points are properly set and visible
+                        const pointsField = document.getElementById('points-field');
+                        const pointsInput = document.getElementById('customer-points');
+                        pointsInput.value = customer.rewards_points || 0;
+                        pointsField.style.display = 'block';
                         
                         document.getElementById('customer-modal').classList.remove('hidden');
                     })
                     .catch(error => {
-                        alert('Error loading customer details');
+                        showAlert('Error loading customer details: ' + error.message, 'Error');
                     });
             });
         });
@@ -198,33 +344,49 @@
                 
                 // Fetch customer details
                 fetch(`/api/customers/${customerId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(customer => {
                         document.getElementById('view-customer-name').textContent = customer.name;
+                        document.getElementById('view-points').textContent = customer.rewards_points || '0';
                         
                         let detailsHtml = `
                             <p><strong>Phone:</strong> ${customer.phone || 'N/A'}</p>
                             <p><strong>Email:</strong> ${customer.email || 'N/A'}</p>
                             <p><strong>Birthday:</strong> ${customer.birthday ? new Date(customer.birthday).toLocaleDateString() : 'N/A'}</p>
-                            <p><strong>Rewards Points:</strong> ${customer.rewards_points}</p>
-                            <h3 class="font-bold mt-4 mb-2">Recent Orders</h3>
                         `;
                         
+                        document.getElementById('customer-details').innerHTML = detailsHtml;
+                        
+                        // Populate purchase history
+                        const historyTable = document.getElementById('purchase-history');
+                        historyTable.innerHTML = '';
+                        
                         if (customer.orders && customer.orders.length > 0) {
-                            detailsHtml += '<ul class="list-disc pl-5">';
                             customer.orders.forEach(order => {
-                                detailsHtml += `<li>${new Date(order.created_at).toLocaleDateString()} - Order #${order.order_number} (₱${order.total_amount.toFixed(2)})</li>`;
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="py-2 px-4 border-b">${new Date(order.created_at).toLocaleDateString()}</td>
+                                    <td class="py-2 px-4 border-b">${order.order_number}</td>
+                                    <td class="py-2 px-4 border-b text-right">₱${order.total_amount.toFixed(2)}</td>
+                                    <td class="py-2 px-4 border-b text-right">${order.points_earned || 0}</td>
+                                `;
+                                historyTable.appendChild(row);
                             });
-                            detailsHtml += '</ul>';
                         } else {
-                            detailsHtml += '<p class="text-gray-500">No recent orders.</p>';
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td colspan="4" class="py-2 px-4 border-b text-center text-gray-500">No purchase history available.</td>`;
+                            historyTable.appendChild(row);
                         }
                         
-                        document.getElementById('view-customer-content').innerHTML = detailsHtml;
                         document.getElementById('view-customer-modal').classList.remove('hidden');
                     })
                     .catch(error => {
-                        alert('Error loading customer details');
+                        showAlert('Error loading customer details: ' + error.message, 'Error');
                     });
             });
         });
@@ -232,11 +394,42 @@
         // Add points buttons
         document.querySelectorAll('.add-points').forEach(button => {
             button.addEventListener('click', function() {
-                document.getElementById('points-customer-id').value = this.dataset.id;
-                document.getElementById('points-customer-name').textContent = this.dataset.name;
-                document.getElementById('points-form').reset();
-                document.getElementById('points-modal').classList.remove('hidden');
+                const customerId = this.dataset.id;
+                const customerName = this.dataset.name;
+                
+                // Fetch current points
+                fetch(`/api/customers/${customerId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(customer => {
+                        document.getElementById('points-customer-id').value = customerId;
+                        document.getElementById('points-customer-name').textContent = customerName;
+                        document.getElementById('current-points').textContent = customer.rewards_points || 0;
+                        document.getElementById('points-to-add').value = 1;
+                        document.getElementById('points-modal').classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        showAlert('Error loading customer points: ' + error.message, 'Error');
+                    });
             });
+        });
+        
+        // Points increment/decrement buttons
+        document.getElementById('increase-points').addEventListener('click', function() {
+            const pointsInput = document.getElementById('points-to-add');
+            pointsInput.value = parseInt(pointsInput.value) + 1;
+        });
+        
+        document.getElementById('decrease-points').addEventListener('click', function() {
+            const pointsInput = document.getElementById('points-to-add');
+            const currentValue = parseInt(pointsInput.value);
+            if (currentValue > 1) {
+                pointsInput.value = currentValue - 1;
+            }
         });
         
         // Customer form submission
@@ -244,29 +437,55 @@
             e.preventDefault();
             const formData = new FormData(this);
             const customerId = document.getElementById('customer-id').value;
+            const pointsValue = document.getElementById('customer-points').value;
+            
+            console.log("Submitting form with points:", pointsValue); // Debug logging
+            
+            // Ensure points are included in form data
+            if (!formData.has('rewards_points')) {
+                formData.append('rewards_points', pointsValue);
+            }
             
             // Send to server
             fetch(`/api/customers${customerId ? '/' + customerId : ''}`, {
                 method: customerId ? 'PUT' : 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
+                    // Close modal first
+                    closeCustomerModal();
+                    
+                    // Show alert
                     showAlert(customerId ? 'Customer updated successfully!' : 'Customer added successfully!', 'Success');
-                     // Optionally reload after closing the alert
+                    
+                    if (customerId) {
+                        // Try to update the points display in UI without page reload
+                        try {
+                            updateCardPoints(customerId, pointsValue);
+                        } catch (err) {
+                            console.error("Error updating UI:", err);
+                        }
+                    }
+                    
+                    // Set up page reload on alert close
                     document.getElementById('alert-modal').querySelector('button').onclick = () => {
                         closeAlertModal();
                         window.location.reload();
                     };
-                    // closeCustomerModal(); // Close form modal
                 } else {
                     showAlert('Error: ' + data.message, 'Error');
                 }
             })
             .catch(error => {
                 console.error('Error saving customer:', error);
-                showAlert('An error occurred while saving the customer.', 'Error');
+                showAlert('An error occurred while saving the customer: ' + error.message, 'Error');
             });
         });
         
@@ -274,29 +493,49 @@
         document.getElementById('points-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
+            const customerId = document.getElementById('points-customer-id').value;
+            const pointsToAdd = document.getElementById('points-to-add').value;
             
             // Send to server
             fetch('/api/customers/add-points', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
+                    // Close modal first
+                    closePointsModal();
+                    
+                    // Show success alert
                     showAlert('Points added successfully!', 'Success');
-                     // Optionally reload after closing the alert
+                    
+                    // Try to update UI without page reload
+                    if (data.new_points_total) {
+                        try {
+                            updateCardPoints(customerId, data.new_points_total);
+                        } catch (err) {
+                            console.error("Error updating UI:", err);
+                        }
+                    }
+                    
+                    // Set up page reload on alert close
                     document.getElementById('alert-modal').querySelector('button').onclick = () => {
                         closeAlertModal();
                         window.location.reload();
                     };
-                    // closePointsModal(); // Close points modal
                 } else {
                     showAlert('Error: ' + data.message, 'Error');
                 }
             })
             .catch(error => {
                 console.error('Error adding points:', error);
-                showAlert('An error occurred while adding points.', 'Error');
+                showAlert('An error occurred while adding points: ' + error.message, 'Error');
             });
         });
         
@@ -304,39 +543,137 @@
         document.querySelectorAll('.send-promo').forEach(button => {
             button.addEventListener('click', function() {
                 const customerId = this.dataset.id;
+                const hasBirthday = this.dataset.hasBirthday === 'true';
                 
-                fetch(`/api/customers/${customerId}/birthday-promo`, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert(data.message || 'Birthday promo sent!', 'Success');
-                    } else {
-                        showAlert('Error: ' + data.message, 'Error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending promo:', error);
-                    showAlert('An error occurred while sending the promo.', 'Error');
-                });
+                // Fetch customer details for promo modal
+                fetch(`/api/customers/${customerId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(customer => {
+                        document.getElementById('promo-customer-name').textContent = customer.name;
+                        
+                        // Check if customer has birthday set
+                        if (customer.birthday) {
+                            const birthdayDate = new Date(customer.birthday);
+                            const formattedDate = birthdayDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+                            document.getElementById('promo-birthday-date').textContent = `Birthday: ${formattedDate}`;
+                            document.getElementById('no-birthday-warning').classList.add('hidden');
+                            document.getElementById('send-promo-btn').disabled = false;
+                            document.getElementById('send-promo-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            document.getElementById('promo-birthday-date').textContent = 'No birthday set';
+                            document.getElementById('no-birthday-warning').classList.remove('hidden');
+                            document.getElementById('send-promo-btn').disabled = true;
+                            document.getElementById('send-promo-btn').classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                        
+                        // Reset message field
+                        document.getElementById('promo-message').value = '';
+                        
+                        // Set up send button handler with ultra-simplified approach
+                        document.getElementById('send-promo-btn').onclick = function() {
+                            const customMessage = document.getElementById('promo-message').value.trim();
+                            
+                            // Show loading state
+                            this.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Sending...';
+                            this.disabled = true;
+                            
+                            // Debug information
+                            console.log(`Attempting to send promo to customer ${customerId}`);
+                            
+                            // Construct a simple URL-encoded form submission (most compatible format)
+                            const params = new URLSearchParams();
+                            if (customMessage) {
+                                params.append('message', customMessage);
+                            }
+                            
+                            // Get CSRF token if available (for Flask apps)
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                            if (csrfToken) {
+                                console.log("Found CSRF token, including in request");
+                                params.append('csrf_token', csrfToken);
+                            }
+                            
+                            // Super simplified approach
+                            const xhr = new XMLHttpRequest();
+                            xhr.open('POST', `/api/customers/${customerId}/birthday-promo`, true);
+                            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                            
+                            xhr.onload = function() {
+                                console.log(`XHR Status: ${xhr.status}`);
+                                console.log(`XHR Response: ${xhr.responseText}`);
+                                
+                                let success = xhr.status >= 200 && xhr.status < 300;
+                                let message = 'Birthday promotion sent successfully!';
+                                let data = {};
+                                
+                                try {
+                                    if (xhr.responseText) {
+                                        data = JSON.parse(xhr.responseText);
+                                        if (typeof data.success !== 'undefined') {
+                                            success = data.success;
+                                        }
+                                        if (data.message) {
+                                            message = data.message;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn("Response was not valid JSON", e);
+                                }
+                                
+                                closeBirthdayPromoModal();
+                                
+                                if (success) {
+                                    showAlert(message, 'Success');
+                                } else {
+                                    showAlert(`Error: ${message || `Server responded with status ${xhr.status}`}`, 'Error');
+                                }
+                                
+                                // Reset button
+                                document.getElementById('send-promo-btn').innerHTML = 'Send Promotion';
+                                document.getElementById('send-promo-btn').disabled = false;
+                            };
+                            
+                            xhr.onerror = function() {
+                                console.error('XHR Request failed');
+                                closeBirthdayPromoModal();
+                                showAlert('Network error while sending promotion. Please try again later.', 'Error');
+                                
+                                // Reset button
+                                document.getElementById('send-promo-btn').innerHTML = 'Send Promotion';
+                                document.getElementById('send-promo-btn').disabled = false;
+                            };
+                            
+                            // Send the request
+                            console.log(`Sending with params: ${params.toString()}`);
+                            xhr.send(params.toString());
+                        };
+                        
+                        document.getElementById('birthday-promo-modal').classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        showAlert('Error loading customer details: ' + error.message, 'Error');
+                    });
             });
         });
         
-        // Search functionality
+        // Search functionality for cards
         document.getElementById('search-customers').addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#customers-table-body tr');
+            const cards = document.querySelectorAll('#customers-card-grid .customer-card');
             
-            rows.forEach(row => {
-                const name = row.cells[0].textContent.toLowerCase();
-                const phone = row.cells[1].textContent.toLowerCase();
-                const email = row.cells[2].textContent.toLowerCase();
+            cards.forEach(card => {
+                const name = card.dataset.name;
+                const phone = card.dataset.phone;
                 
-                if (name.includes(searchTerm) || phone.includes(searchTerm) || email.includes(searchTerm)) {
-                    row.classList.remove('hidden');
+                if (name.includes(searchTerm) || phone.includes(searchTerm)) {
+                    card.style.display = '';
                 } else {
-                    row.classList.add('hidden');
+                    card.style.display = 'none';
                 }
             });
         });
@@ -353,6 +690,11 @@
     function closePointsModal() {
         document.getElementById('points-modal').classList.add('hidden');
     }
+    
+    function closeBirthdayPromoModal() {
+        document.getElementById('birthday-promo-modal').classList.add('hidden');
+    }
 </script>
 {% endblock %}
+
 {% endblock %}
