@@ -43,7 +43,7 @@
                         {% for ingredient in ingredients %}
                         <tr>
                             <td class="py-3 px-4">{{ ingredient.name }}</td>
-                            <td class="py-3 px-4">{{ ingredient.quantity }}</td>
+                            <td class="py-3 px-4">{{ "{:.2f}".format(ingredient.quantity) }}</td> <!-- Format quantity -->
                             <td class="py-3 px-4">{{ ingredient.unit }}</td>
                             <td class="py-3 px-4">
                                 <span class="px-2 py-1 text-xs rounded-full 
@@ -90,7 +90,7 @@
                 <div class="flex items-center justify-between p-3 bg-red-50 rounded border border-red-200">
                     <div>
                         <p class="font-semibold">{{ ingredient.name }}</p>
-                        <p class="text-sm text-gray-600">{{ ingredient.quantity }} {{ ingredient.unit }} remaining</p>
+                        <p class="text-sm text-gray-600">{{ "{:.2f}".format(ingredient.quantity) }} {{ ingredient.unit }} remaining</p> <!-- Format quantity -->
                     </div>
                     <button class="text-red-600 hover:text-red-800 reorder-ingredient" data-id="{{ ingredient.id }}">
                         <i class="fas fa-shopping-cart mr-1"></i> Reorder
@@ -113,7 +113,7 @@
                        {% if log.reason == 'purchase' %}text-green-600
                        {% elif log.reason == 'usage' %}text-blue-600
                        {% else %}text-red-600{% endif %}">
-                        {{ log.quantity_change }} {{ log.ingredient.unit }} 
+                        {{ "{:+.2f}".format(log.quantity_change) }} {{ log.ingredient.unit }} <!-- Format quantity change with sign -->
                         {% if log.reason == 'purchase' %}added
                         {% elif log.reason == 'usage' %}used
                         {% else %}wasted{% endif %}
