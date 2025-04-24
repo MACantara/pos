@@ -82,16 +82,16 @@
     </div>
 </div>
 
-<!-- Report Chart -->
-<div class="bg-white rounded-lg shadow p-6 mb-6">
-    <h2 class="text-xl font-bold mb-4">Sales Trend</h2>
-    <div class="h-80">
-        <canvas id="sales-chart"></canvas>
-    </div>
-</div>
-
-<!-- Report Tables -->
+<!-- Report Charts & Tables Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Sales Trend Chart (Moved inside grid and spanning full width) -->
+    <div class="bg-white rounded-lg shadow p-6 md:col-span-2"> <!-- Added md:col-span-2 -->
+        <h2 class="text-xl font-bold mb-4">Sales Trend</h2>
+        <div class="h-80">
+            <canvas id="sales-chart"></canvas>
+        </div>
+    </div>
+
     <!-- Top Selling Items -->
     <div class="bg-white rounded-lg shadow p-6" id="top-items-container">
         <h2 class="text-xl font-bold mb-4">Top Selling Items</h2>
