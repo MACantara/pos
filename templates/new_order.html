@@ -7,7 +7,7 @@
     <!-- Header with user info and logout -->
     <header class="bg-red-700 text-white p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Tokyo Tokyo POS</h1>
+            <h1 class="text-2xl font-bold">Tokyo Tokyo</h1>
             <div class="flex items-center space-x-4">
                 <span>{{ current_user.name }} ({{ current_user.role }})</span>
                 <a href="{{ url_for('auth.logout') }}" class="bg-white text-red-700 py-2 px-4 rounded-lg hover:bg-gray-100">
@@ -210,21 +210,8 @@
         
         <div id="modal-addons" class="mb-6">
             <h3 class="font-bold text-lg mb-3">Add-ons</h3>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" class="form-checkbox text-red-700 h-5 w-5">
-                        <span class="ml-3 text-lg">Extra Rice</span>
-                    </label>
-                    <span class="font-bold">₱30.00</span>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" class="form-checkbox text-red-700 h-5 w-5">
-                        <span class="ml-3 text-lg">Extra Nori</span>
-                    </label>
-                    <span class="font-bold">₱20.00</span>
-                </div>
+            <div id="addons-container" class="space-y-3">
+                <!-- Add-ons will be dynamically inserted here -->
             </div>
         </div>
         
@@ -358,6 +345,50 @@
     let currentOrder = [];
     let selectedProduct = null;
 
+    // Define available add-ons by category
+    const addonsByCategory = {
+        // Main Course add-ons
+        '1': [ // Assuming category ID 1 is "Main Course"
+            { name: 'Extra Rice', price: 30.00 },
+            { name: 'Extra Sauce', price: 15.00 },
+            { name: 'Upgrade to Large', price: 45.00 }
+        ],
+        // Appetizers
+        '2': [ // Assuming category ID 2 is "Appetizers"
+            { name: 'Extra Dipping Sauce', price: 10.00 },
+            { name: 'Add Wasabi', price: 5.00 }
+        ],
+        // Desserts
+        '3': [ // Assuming category ID 3 is "Desserts"
+            { name: 'Add Ice Cream Scoop', price: 35.00 },
+            { name: 'Add Chocolate Sauce', price: 15.00 }
+        ],
+        // Beverages
+        '4': [ // Assuming category ID 4 is "Beverages" 
+            { name: 'Make it Large', price: 20.00 },
+            { name: 'Add Ice', price: 5.00 },
+            { name: 'Add Tapioca', price: 15.00 }
+        ],
+        // Product-specific overrides
+        'product': {
+            // These override category defaults for specific products
+            // Product IDs as keys
+            'Gyudon': [
+                { name: 'Extra Beef', price: 70.00 },
+                { name: 'Extra Onions', price: 15.00 },
+                { name: 'Extra Rice', price: 30.00 }
+            ],
+            'Maki Roll': [
+                { name: 'Extra Nori', price: 20.00 },
+                { name: 'Extra Wasabi', price: 10.00 },
+                { name: 'Add Roe', price: 50.00 }
+            ],
+            'Cola Can': [
+                { name: 'Add Ice', price: 5.00 }
+            ]
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         // Confirm modal button listeners
         document.getElementById('confirm-modal-no').addEventListener('click', closeConfirmModal);
@@ -418,9 +449,14 @@
                     selectedProduct = {
                         id: this.dataset.id,
                         name: this.dataset.name,
-                        price: parseFloat(this.dataset.price)
+                        price: parseFloat(this.dataset.price),
+                        category: this.dataset.category
                     };
                     document.getElementById('modal-product-name').textContent = selectedProduct.name;
+                    
+                    // Populate add-ons based on product
+                    populateAddons(selectedProduct);
+                    
                     document.getElementById('customize-modal').classList.remove('hidden');
                 }
             });
@@ -462,13 +498,44 @@
                 const quantity = parseInt(document.getElementById('quantity').value);
                 const notes = document.getElementById('notes').value;
                 
+                // Collect selected add-ons
+                const addons = [];
+                document.querySelectorAll('#addons-container input[type="checkbox"]:checked').forEach(checkbox => {
+                    const addonContainer = checkbox.closest('.flex.items-center.justify-between');
+                    const nameElement = addonContainer.querySelector('.ml-3');
+                    const priceElement = addonContainer.querySelector('.font-bold');
+                    
+                    if (nameElement && priceElement) {
+                        const name = nameElement.textContent;
+                        const priceText = priceElement.textContent;
+                        const price = parseFloat(priceText.replace('₱', '').trim());
+                        
+                        addons.push({
+                            name: name,
+                            price: price
+                        });
+                    }
+                });
+                
+                // Calculate total with add-ons
+                let itemPrice = selectedProduct.price;
+                let addonDescription = '';
+                
+                if (addons.length > 0) {
+                    addonDescription = ' with ' + addons.map(addon => addon.name).join(', ');
+                    const addonsCost = addons.reduce((sum, addon) => sum + addon.price, 0);
+                    itemPrice += addonsCost;
+                }
+                
                 currentOrder.push({
                     productId: selectedProduct.id,
-                    name: selectedProduct.name,
-                    price: selectedProduct.price,
+                    name: selectedProduct.name + addonDescription,
+                    price: itemPrice,
+                    basePrice: selectedProduct.price,
                     quantity: quantity,
                     notes: notes,
-                    total: selectedProduct.price * quantity
+                    addons: addons,
+                    total: itemPrice * quantity
                 });
                 
                 updateOrderSummary();
@@ -577,6 +644,7 @@
         document.getElementById('customize-modal').classList.add('hidden');
         document.getElementById('quantity').value = 1;
         document.getElementById('notes').value = '';
+        document.getElementById('addons-container').innerHTML = '';
         selectedProduct = null;
     }
     
@@ -628,6 +696,42 @@
     function removeOrderItem(index) {
         currentOrder.splice(index, 1);
         updateOrderSummary();
+    }
+
+    // Function to populate add-ons based on selected product
+    function populateAddons(product) {
+        const addonsContainer = document.getElementById('addons-container');
+        addonsContainer.innerHTML = ''; // Clear existing add-ons
+        
+        let addons = [];
+        
+        // Check for product-specific add-ons first
+        if (addonsByCategory.product[product.name]) {
+            addons = addonsByCategory.product[product.name];
+        } 
+        // Otherwise use category-based add-ons
+        else if (addonsByCategory[product.category]) {
+            addons = addonsByCategory[product.category];
+        }
+        
+        if (addons.length === 0) {
+            addonsContainer.innerHTML = '<p class="text-gray-500">No add-ons available for this item</p>';
+            return;
+        }
+        
+        // Create add-on elements
+        addons.forEach(addon => {
+            const addonElement = document.createElement('div');
+            addonElement.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+            addonElement.innerHTML = `
+                <label class="inline-flex items-center">
+                    <input type="checkbox" class="form-checkbox text-red-700 h-5 w-5">
+                    <span class="ml-3 text-lg">${addon.name}</span>
+                </label>
+                <span class="font-bold">₱${addon.price.toFixed(2)}</span>
+            `;
+            addonsContainer.appendChild(addonElement);
+        });
     }
 </script>
 
