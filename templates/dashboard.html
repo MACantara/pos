@@ -3,7 +3,22 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Dashboard</h1>
+    <!-- Date Range Filters -->
+    <div class="flex space-x-1 border border-gray-300 rounded-md p-0.5">
+        {% set ranges = {'today': 'Today', 'yesterday': 'Yesterday', 'this_week': 'This Week', 'this_month': 'This Month', 'this_year': 'This Year'} %}
+        {% for range_key, range_label in ranges.items() %}
+        <a href="{{ url_for('dashboard.view', range=range_key) }}" 
+           class="px-3 py-1 rounded-md text-sm font-medium transition-colors duration-150
+                  {% if selected_range == range_key %} bg-red-700 text-white 
+                  {% else %} text-gray-600 hover:bg-gray-100 {% endif %}">
+            {{ range_label }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
     <!-- Sales Summary -->
@@ -13,7 +28,7 @@
                 <i class="fas fa-yen-sign text-xl"></i>
             </div>
             <div>
-                <p class="text-sm text-gray-500 uppercase">Today's Sales</p>
+                <p class="text-sm text-gray-500 uppercase">Total Sales ({{ ranges[selected_range] }})</p> <!-- Updated Label -->
                 <p class="text-2xl font-bold">₱{{ "{:,.2f}".format(total_sales) }}</p>
             </div>
         </div>
@@ -26,8 +41,8 @@
                 <i class="fas fa-shopping-cart text-xl"></i>
             </div>
             <div>
-                <p class="text-sm text-gray-500 uppercase">Today's Orders</p>
-                <p class="text-2xl font-bold">{{ today_orders }}</p>
+                <p class="text-sm text-gray-500 uppercase">Total Orders ({{ ranges[selected_range] }})</p> <!-- Updated Label -->
+                <p class="text-2xl font-bold">{{ today_orders }}</p> <!-- Variable name kept as today_orders for simplicity -->
             </div>
         </div>
     </div>
@@ -39,8 +54,8 @@
                 <i class="fas fa-user text-xl"></i>
             </div>
             <div>
-                <p class="text-sm text-gray-500 uppercase">Staff on Duty</p>
-                <p class="text-2xl font-bold">{{ staff_on_duty|length }}</p>
+                <p class="text-sm text-gray-500 uppercase">Staff Active ({{ ranges[selected_range] }})</p> <!-- Updated Label -->
+                <p class="text-2xl font-bold">{{ staff_on_duty_count }}</p> <!-- Use staff_on_duty_count -->
             </div>
         </div>
     </div>
@@ -62,7 +77,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Best Selling Items -->
     <div class="bg-white p-6 rounded-lg shadow col-span-1">
-        <h2 class="text-xl font-bold mb-4">Best Selling Items</h2>
+        <h2 class="text-xl font-bold mb-4">Best Selling Items ({{ ranges[selected_range] }})</h2> <!-- Updated Label -->
         <div class="space-y-4">
             {% if best_sellers %}
                 {% for item in best_sellers %}
@@ -72,14 +87,14 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <p class="text-gray-500">No sales data available today</p>
+                <p class="text-gray-500">No sales data available for this period.</p> <!-- Updated Message -->
             {% endif %}
         </div>
     </div>
     
     <!-- Sales Chart -->
     <div class="bg-white p-6 rounded-lg shadow col-span-2">
-        <h2 class="text-xl font-bold mb-4">Sales Overview</h2>
+        <h2 class="text-xl font-bold mb-4">Sales Overview ({{ ranges[selected_range] }})</h2> <!-- Updated Label -->
         <div class="h-64">
             <canvas id="sales-chart"></canvas>
         </div>
@@ -87,7 +102,7 @@
     
     <!-- Recent Orders -->
     <div class="bg-white p-6 rounded-lg shadow col-span-2">
-        <h2 class="text-xl font-bold mb-4">Recent Orders</h2>
+        <h2 class="text-xl font-bold mb-4">Recent Orders ({{ ranges[selected_range] }})</h2> <!-- Updated Label -->
         <div class="overflow-x-auto">
             <table class="min-w-full bg-white">
                 <thead>
@@ -104,14 +119,16 @@
                         {% for order in orders %}
                         <tr>
                             <td class="py-2 px-4 border-b">{{ order.order_number }}</td>
-                            <td class="py-2 px-4 border-b">{{ order.created_at.strftime('%H:%M') }}</td>
-                            <td class="py-2 px-4 border-b">{{ order.order_type }}</td>
+                            <td class="py-2 px-4 border-b">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td> <!-- Show full date for context -->
+                            <td class="py-2 px-4 border-b">{{ order.order_type|capitalize }}</td> <!-- Capitalize -->
                             <td class="py-2 px-4 border-b">
                                 <span class="px-2 py-1 rounded text-xs 
                                 {% if order.status == 'completed' %}bg-green-100 text-green-800
                                 {% elif order.status == 'in-progress' %}bg-yellow-100 text-yellow-800
+                                {% elif order.status == 'pending' %}bg-blue-100 text-blue-800
+                                {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
                                 {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {{ order.status }}
+                                    {{ order.status|replace('_', ' ')|capitalize }} <!-- Format status -->
                                 </span>
                             </td>
                             <td class="py-2 px-4 border-b">₱{{ "{:,.2f}".format(order.total_amount) }}</td>
@@ -119,7 +136,7 @@
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="5" class="py-4 text-center text-gray-500">No recent orders</td>
+                            <td colspan="5" class="py-4 text-center text-gray-500">No recent orders in this period.</td> <!-- Updated Message -->
                         </tr>
                     {% endif %}
                 </tbody>
@@ -129,22 +146,23 @@
     
     <!-- Staff Performance -->
     <div class="bg-white p-6 rounded-lg shadow col-span-1">
-        <h2 class="text-xl font-bold mb-4">Staff Performance (Today's Orders)</h2> <!-- Updated title slightly for clarity -->
+        <h2 class="text-xl font-bold mb-4">Staff Performance ({{ ranges[selected_range] }})</h2> <!-- Updated Label -->
         <div class="space-y-4">
-            {% if staff_performance %} <!-- Use staff_performance variable from the route -->
-                {% for staff in staff_performance %} <!-- Iterate over staff_performance -->
+            {% if staff_performance %} 
+                {% for staff in staff_performance %} 
                 <div>
                     <div class="flex justify-between mb-1">
-                        <span>{{ staff.name }}</span> <!-- Access name directly -->
-                        <span class="text-sm text-gray-500">{{ staff.order_count }} orders</span> <!-- Access order_count directly -->
+                        <span>{{ staff.name }}</span> 
+                        <span class="text-sm text-gray-500">{{ staff.order_count }} orders</span> 
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700"> <!-- Added dark mode bg for container -->
-                        <div class="bg-red-600 h-2.5 rounded-full" style="width: {{ (staff.order_count / today_orders * 100) if today_orders > 0 else 0 }}%"></div> <!-- Use order_count in calculation -->
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700"> 
+                        <!-- Note: Progress bar shows % of total orders in the selected range, not just today -->
+                        <div class="bg-red-600 h-2.5 rounded-full" style="width: {{ (staff.order_count / today_orders * 100) if today_orders > 0 else 0 }}%"></div> 
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <p class="text-gray-500">No staff performance data for today.</p> <!-- Updated else message -->
+                <p class="text-gray-500">No staff performance data for this period.</p> <!-- Updated Message -->
             {% endif %}
         </div>
     </div>
@@ -154,25 +172,40 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Data for the chart - in a real app this would come from the backend
+    // Get data from backend
+    const salesLabels = {{ sales_trend_labels | tojson }};
+    const salesData = {{ sales_trend_values | tojson }};
+
     const ctx = document.getElementById('sales-chart').getContext('2d');
-    const salesChart = new Chart(ctx, {
+    
+    // Destroy previous chart instance if it exists
+    if (window.mySalesChart) {
+        window.mySalesChart.destroy();
+    }
+    
+    // Create new chart instance
+    window.mySalesChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM', '8PM'],
+            labels: salesLabels, // Use data from backend
             datasets: [{
                 label: 'Sales (₱)',
-                data: [1200, 1900, 3000, 5000, 4000, 3500, 4500, 6000],
+                data: salesData, // Use data from backend
                 backgroundColor: 'rgba(220, 38, 38, 0.1)',
                 borderColor: 'rgba(220, 38, 38, 1)',
                 borderWidth: 2,
-                tension: 0.3,
+                tension: 0.1, // Adjusted tension slightly
                 fill: true
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
 </script>
