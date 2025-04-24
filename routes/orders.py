@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, abort
 from flask_login import login_required, current_user
 from extensions import db
-from models import Order, OrderItem, Product, User # Import necessary models
+from models import Order, OrderItem, Product, User, Customer # Import Customer
 
 orders_bp = Blueprint('orders', __name__, url_prefix='/orders')
 
@@ -18,8 +18,13 @@ def list_orders():
     status_filter = request.args.get('status', 'all')
     type_filter = request.args.get('type', 'all')
     
-    # Base query
-    query = Order.query.join(User).add_columns(User.name.label('staff_name')) # Join to get staff name
+    # Base query - Join User and optionally Customer
+    query = db.session.query(
+        Order, 
+        User.name.label('staff_name'), 
+        Customer.name.label('customer_name') # Select customer name
+    ).join(User, Order.user_id == User.id)\
+     .outerjoin(Customer, Order.customer_id == Customer.id) # Left outer join for customer
 
     # Apply filters
     if status_filter != 'all':
@@ -29,11 +34,12 @@ def list_orders():
     
     # Get paginated orders
     pagination = query.order_by(Order.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    orders = pagination.items
+    # orders_data now contains tuples: (Order object, staff_name, customer_name)
+    orders_data = pagination.items 
     
     return render_template(
         'orders.html', 
-        orders=orders, 
+        orders_data=orders_data, # Pass the tuple data
         pagination=pagination,
         status_filter=status_filter,
         type_filter=type_filter
