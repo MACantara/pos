@@ -87,7 +87,7 @@
     <!-- Sales Trend Chart (Moved inside grid and spanning full width) -->
     <div class="bg-white rounded-lg shadow p-6 md:col-span-2"> <!-- Added md:col-span-2 -->
         <h2 class="text-xl font-bold mb-4">Sales Trend</h2>
-        <div class="h-80">
+        <div class="h-80 w-full"> <!-- Added w-full here -->
             <canvas id="sales-chart"></canvas>
         </div>
     </div>
@@ -315,7 +315,16 @@
                     borderWidth: 2, tension: 0.3, fill: true
                 }]
             },
-            options: { /* ... options ... */ }
+            options: { 
+                responsive: true,       // Keep true
+                maintainAspectRatio: false, // Keep false
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+                // Add other options if needed
+            }
         });
     }
     
