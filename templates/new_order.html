@@ -70,7 +70,7 @@
                              data-price="{{ product.price }}"
                              data-category="{{ product.category_id }}">
                             <div class="h-32 bg-gray-200 rounded-t-lg relative">
-                                <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="w-full h-full object-cover rounded-t-lg">
+                                <img src="{{ url_for('static', filename='img/' + product.image) }}" alt="{{ product.name }}" class="w-full h-full object-cover rounded-t-lg">
                                 {% if not product.available %}
                                     <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-t-lg">
                                         <span class="text-white font-bold">Out of Stock</span>
