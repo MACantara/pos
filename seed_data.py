@@ -90,33 +90,49 @@ def seed_data():
 
         # --- Create Products ---
         print("Creating products...")
+        # Ensure categories are flushed and available
+        appetizer_cat = Category.query.filter_by(name='Appetizers').first()
+        main_course_cat = Category.query.filter_by(name='Main Courses').first()
+        dessert_cat = Category.query.filter_by(name='Desserts').first()
+        beverage_cat = Category.query.filter_by(name='Beverages').first()
+
         products = [
-            Product(name='Chicken Sandwich', description='Grilled chicken breast with lettuce and tomato', price=250.00, category_id=categories[1].id, image='chicken_sandwich.jpg'),
-            Product(name='Caesar Salad', description='Fresh lettuce with Caesar dressing', price=180.00, category_id=categories[0].id, image='caesar_salad.jpg'),
-            Product(name='French Fries', description='Crispy golden fries', price=80.00, category_id=categories[0].id, image='fries.jpg'),
-            Product(name='Cola Can', description='330ml Can of Cola', price=50.00, category_id=categories[3].id, image='cola.jpg'),
-            Product(name='Ice Cream Scoop', description='Single scoop of vanilla ice cream', price=70.00, category_id=categories[2].id, image='ice_cream.jpg')
+            Product(name='Takoyaki Balls', description='Japanese octopus balls', price=150.00, category_id=appetizer_cat.id, image='balls.jpg'),
+            Product(name='Beef Bowl', description='Sliced beef over rice', price=350.00, category_id=main_course_cat.id, image='beef.jpg'),
+            Product(name='Cheesy Baked Rice', description='Baked rice with cheese topping', price=280.00, category_id=main_course_cat.id, image='cheesy.jpg'),
+            Product(name='Gyudon', description='Beef and onion rice bowl', price=320.00, category_id=main_course_cat.id, image='gyudon.jpg'),
+            Product(name='Chicken Katsu', description='Fried chicken cutlet', price=300.00, category_id=main_course_cat.id, image='katsu.jpg'),
+            Product(name='Maki Roll', description='Assorted sushi rolls', price=250.00, category_id=appetizer_cat.id, image='maki.jpg'),
+            Product(name='Beef Misono', description='Teppanyaki style beef', price=450.00, category_id=main_course_cat.id, image='misono.jpg'),
+            Product(name='Oyakodon', description='Chicken and egg rice bowl', price=290.00, category_id=main_course_cat.id, image='oyakodon.jpg'),
+            Product(name='Grilled Salmon', description='Grilled salmon fillet', price=480.00, category_id=main_course_cat.id, image='salmon.jpg'),
+            Product(name='Tonkatsu', description='Fried pork cutlet', price=330.00, category_id=main_course_cat.id, image='tonkatsu.jpg'),
+            Product(name='Wagyu Cubes', description='Grilled wagyu beef cubes', price=650.00, category_id=main_course_cat.id, image='wagyu.jpg'),
+            # Keep Cola and Ice Cream if desired, or remove them
+            Product(name='Cola Can', description='330ml Can of Cola', price=50.00, category_id=beverage_cat.id, image='cola.jpg'),
+            Product(name='Ice Cream Scoop', description='Single scoop of vanilla ice cream', price=70.00, category_id=dessert_cat.id, image='ice_cream.jpg')
         ]
         db.session.add_all(products)
         db.session.flush() # Get product IDs
 
         # --- Create Product Ingredients ---
-        print("Creating product ingredients...")
+        # !!! IMPORTANT: These are PLACEHOLDERS. Update with actual recipe ingredients and quantities. !!!
+        print("Creating product ingredients (placeholders)...")
         product_ingredients = [
-            # Chicken Sandwich
-            ProductIngredient(product_id=products[0].id, ingredient_id=ingredients[1].id, quantity_needed=0.15), # 150g chicken
-            ProductIngredient(product_id=products[0].id, ingredient_id=ingredients[0].id, quantity_needed=0.05), # 50g tomato
-            ProductIngredient(product_id=products[0].id, ingredient_id=ingredients[2].id, quantity_needed=0.1),  # 0.1 head lettuce
-            ProductIngredient(product_id=products[0].id, ingredient_id=ingredients[3].id, quantity_needed=1.0),  # 1 bun
-            # Caesar Salad
-            ProductIngredient(product_id=products[1].id, ingredient_id=ingredients[2].id, quantity_needed=0.2),  # 0.2 head lettuce
-            # French Fries
-            ProductIngredient(product_id=products[2].id, ingredient_id=ingredients[7].id, quantity_needed=0.2), # 200g potatoes
+            # Chicken Katsu (Example - uses existing chicken, assumes need for potatoes/oil not listed)
+            ProductIngredient(product_id=Product.query.filter_by(name='Chicken Katsu').first().id, ingredient_id=Ingredient.query.filter_by(name='Chicken Breast').first().id, quantity_needed=0.18), # 180g chicken
+            # Gyudon (Example - assumes beef, onion, rice - needs more ingredients)
+            ProductIngredient(product_id=Product.query.filter_by(name='Gyudon').first().id, ingredient_id=Ingredient.query.filter_by(name='Tomato').first().id, quantity_needed=0.05), # Placeholder, replace Tomato with Beef/Onion etc.
+            # Oyakodon (Example - uses existing chicken, needs egg, onion, rice etc.)
+            ProductIngredient(product_id=Product.query.filter_by(name='Oyakodon').first().id, ingredient_id=Ingredient.query.filter_by(name='Chicken Breast').first().id, quantity_needed=0.15), # 150g chicken
+            # Wagyu Cubes (Example - needs Wagyu ingredient)
+            ProductIngredient(product_id=Product.query.filter_by(name='Wagyu Cubes').first().id, ingredient_id=Ingredient.query.filter_by(name='Chicken Breast').first().id, quantity_needed=0.15), # Placeholder, replace Chicken with Wagyu
             # Cola Can
-            ProductIngredient(product_id=products[3].id, ingredient_id=ingredients[5].id, quantity_needed=1.0),  # 1 can
+            ProductIngredient(product_id=Product.query.filter_by(name='Cola Can').first().id, ingredient_id=Ingredient.query.filter_by(name='Cola').first().id, quantity_needed=1.0),
             # Ice Cream Scoop
-            ProductIngredient(product_id=products[4].id, ingredient_id=ingredients[6].id, quantity_needed=0.1)  # 100ml ice cream
+            ProductIngredient(product_id=Product.query.filter_by(name='Ice Cream Scoop').first().id, ingredient_id=Ingredient.query.filter_by(name='Ice Cream').first().id, quantity_needed=0.1)
         ]
+        # Add more ProductIngredient entries for the other new products as needed.
         db.session.add_all(product_ingredients)
 
         # --- Create Customers ---
@@ -136,7 +152,13 @@ def seed_data():
         inventory_logs_for_orders = []
         tax_rate = 0.12 # Example tax rate
 
-        for i in range(5): # Create 5 sample orders
+        # Fetch all products again after potentially adding new ones
+        all_products = Product.query.all()
+        if not all_products:
+             print("Warning: No products found to create orders with.")
+             return # Exit if no products
+
+        for i in range(15): # Create 15 sample orders
             order_user = random.choice(users)
             order_customer = random.choice(customers)
             order_type = random.choice(['dine-in', 'take-out', 'delivery'])
@@ -166,7 +188,7 @@ def seed_data():
             order_subtotal = 0
             num_items = random.randint(1, 4)
             for _ in range(num_items):
-                product = random.choice(products)
+                product = random.choice(all_products) # Use the updated product list
                 quantity = random.randint(1, 3)
                 item_price = product.price # Price at the time of order
                 item_total = item_price * quantity
@@ -177,7 +199,7 @@ def seed_data():
                     product_id=product.id,
                     quantity=quantity,
                     price=item_price,
-                    notes=random.choice([None, "Extra sauce", "No onions"]) if product.name == 'Chicken Sandwich' else None
+                    notes=random.choice([None, "Less spicy", "Extra rice"]) if product.category_id == main_course_cat.id else None # Example notes
                 )
                 order_items_to_create.append(order_item)
 
@@ -189,18 +211,26 @@ def seed_data():
                         ingredient_to_update = Ingredient.query.get(prod_ing.ingredient_id)
                         if ingredient_to_update:
                             quantity_used = prod_ing.quantity_needed * quantity
-                            ingredient_to_update.quantity -= quantity_used
+                            # Check if enough quantity exists before reducing
+                            if ingredient_to_update.quantity >= quantity_used:
+                                ingredient_to_update.quantity -= quantity_used
+                            else:
+                                print(f"Warning: Not enough {ingredient_to_update.name} ({ingredient_to_update.quantity}{ingredient_to_update.unit}) for order {order.order_number}. Required: {quantity_used}{ingredient_to_update.unit}. Inventory not reduced.")
+                                quantity_used = 0 # Don't log reduction if not enough stock
 
-                            # Create inventory log for usage
-                            log = InventoryLog(
-                                ingredient_id=ingredient_to_update.id,
-                                quantity_change=-quantity_used,
-                                reason='order_usage',
-                                user_id=order_user.id,
-                                order_id=order.id,
-                                timestamp=created_time # Log time should match order time ideally
-                            )
-                            inventory_logs_for_orders.append(log)
+                            # Create inventory log for usage only if quantity was used
+                            if quantity_used > 0:
+                                log = InventoryLog(
+                                    ingredient_id=ingredient_to_update.id,
+                                    quantity_change=-quantity_used,
+                                    reason='order_usage',
+                                    user_id=order_user.id,
+                                    order_id=order.id,
+                                    timestamp=created_time # Log time should match order time ideally
+                                )
+                                inventory_logs_for_orders.append(log)
+                        else:
+                             print(f"Warning: Ingredient ID {prod_ing.ingredient_id} not found for product {product.name} in order {order.order_number}.")
 
 
             # Calculate totals for the order
