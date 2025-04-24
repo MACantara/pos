@@ -54,6 +54,12 @@ def view():
     # Get recent orders (last 5 today)
     recent_orders = today_orders_query.order_by(Order.created_at.desc()).limit(5).all()
 
+    # Calculate Today's Orders Count
+    today_orders_count = db.session.query(func.count(Order.id)).filter(
+        Order.created_at >= start_of_today,
+        Order.created_at <= end_of_today
+    ).scalar() or 0 # Get the count of orders created today
+
     return render_template(
         'dashboard.html', 
         total_sales=total_sales, 
@@ -61,5 +67,6 @@ def view():
         best_sellers=best_sellers,
         staff_on_duty=staff_on_duty,
         low_stock=low_stock,
-        orders=recent_orders # Pass recent orders
+        orders=recent_orders, # Pass recent orders
+        today_orders=today_orders_count # Pass the calculated count
     )
