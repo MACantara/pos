@@ -114,7 +114,7 @@
     <!-- Payment Methods -->
     <div class="bg-white rounded-lg shadow p-6" id="payment-container">
         <h2 class="text-xl font-bold mb-4">Payment Methods</h2>
-        <div class="h-64">
+        <div class="h-64"> <!-- Ensure height is sufficient -->
             <canvas id="payment-chart"></canvas>
         </div>
     </div>
@@ -140,8 +140,8 @@
     
     <!-- Hourly Sales -->
     <div class="bg-white rounded-lg shadow p-6" id="hourly-container">
-        <h2 class="text-xl font-bold mb-4">Peak Hours</h2>
-        <div class="h-64">
+        <h2 class="text-xl font-bold mb-4">Peak Hours (Orders)</h2> <!-- Updated title -->
+        <div class="h-64"> <!-- Ensure height is sufficient -->
             <canvas id="hourly-chart"></canvas>
         </div>
     </div>
@@ -248,8 +248,8 @@
             (reportType === 'sales' || reportType === 'payment') ? 'block' : 'none';
         document.getElementById('staff-container').style.display = 
             (reportType === 'sales' || reportType === 'staff') ? 'block' : 'none';
-        // Add logic for hourly container if needed
-        // document.getElementById('hourly-container').style.display = ...
+        document.getElementById('hourly-container').style.display = 
+            (reportType === 'sales') ? 'block' : 'none'; // Show hourly for sales report
 
         // Populate tables
         populateTopItemsTable(data.top_items);
@@ -258,7 +258,7 @@
         // Generate charts
         generateSalesChart(data.sales_trend);
         generatePaymentChart(data.payment_methods);
-        // generateHourlyChart(data.hourly_sales); // Add if hourly data is available
+        generateHourlyChart(data.hourly_sales); // Call function to generate hourly chart
     }
 
     function populateTopItemsTable(items) {
@@ -322,8 +322,16 @@
     function generatePaymentChart(paymentMethods) {
         const ctx = document.getElementById('payment-chart').getContext('2d');
         
+        // Ensure paymentMethods is an array and has data
+        if (!Array.isArray(paymentMethods) || paymentMethods.length === 0) {
+            // Optionally display a message or clear the chart area
+            if (window.paymentChart) window.paymentChart.destroy();
+            // Example: ctx.fillText("No payment data available", 10, 50); 
+            return; 
+        }
+
         const labels = paymentMethods.map(p => p.method || 'Unknown');
-        const dataValues = paymentMethods.map(p => p.amount);
+        const dataValues = paymentMethods.map(p => p.amount); // Use amount for pie chart value
         
         // Define colors - add more if needed
         const bgColors = [
@@ -336,20 +344,97 @@
         if (window.paymentChart) window.paymentChart.destroy();
         
         window.paymentChart = new Chart(ctx, {
-            type: 'pie',
+            type: 'pie', // Pie chart is suitable for distribution
             data: {
                 labels: labels,
                 datasets: [{
+                    label: 'Sales by Payment Method', // Add a label
                     data: dataValues,
                     backgroundColor: bgColors.slice(0, labels.length),
                     hoverBackgroundColor: hoverColors.slice(0, labels.length)
                 }]
             },
-            options: { /* ... options ... */ }
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false, // Allow chart to fill container height
+                plugins: {
+                    legend: {
+                        position: 'top', // Adjust legend position if needed
+                    },
+                    tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    // Format as currency
+                                    label += new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(context.parsed);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+             }
         });
     }
     
-    // function generateHourlyChart(hourlyData) { /* ... implementation ... */ }
+    function generateHourlyChart(hourlyData) { 
+        const ctx = document.getElementById('hourly-chart').getContext('2d');
+
+        if (!Array.isArray(hourlyData) || hourlyData.length === 0) {
+             if (window.hourlyChart) window.hourlyChart.destroy();
+             return;
+        }
+
+        // Ensure data is sorted by hour (API should already do this)
+        hourlyData.sort((a, b) => a.hour - b.hour);
+
+        const labels = hourlyData.map(h => `${h.hour}:00`); // Format hour labels
+        const orderData = hourlyData.map(h => h.orders); // Use order count for bar chart
+
+        if (window.hourlyChart) window.hourlyChart.destroy();
+
+        window.hourlyChart = new Chart(ctx, {
+            type: 'bar', // Bar chart is good for hourly distribution
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Orders',
+                    data: orderData,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)', // Blue color
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Orders'
+                        }
+                    },
+                    x: {
+                         title: {
+                            display: true,
+                            text: 'Hour of Day'
+                        }
+                    }
+                },
+                 plugins: {
+                    legend: {
+                        display: false // Hide legend for single dataset
+                    }
+                }
+            }
+        });
+    }
     
     function exportReport(format) {
         const form = document.getElementById('report-filters');

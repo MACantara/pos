@@ -7,6 +7,7 @@ from models import User, Category, Product, Ingredient, Supplier, Order, OrderIt
 from datetime import datetime, date, timedelta
 import os
 import io # For file export later if needed
+from sqlalchemy import func, desc, cast, Date as SQLDate, extract # Import extract
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -611,6 +612,27 @@ def generate_report_data():
      .order_by('sale_date')
     sales_trend = [{'date': d[0].isoformat() if isinstance(d[0], date) else d[0], 'sales': float(d[1])} for d in sales_trend_query.all()]
 
+    # --- Calculate Hourly Sales Data ---
+    hourly_sales_query = db.session.query(
+        extract('hour', Order.created_at).label('hour'), # Extract hour
+        func.count(Order.id).label('order_count'),
+        func.sum(Order.total_amount).label('total_sales')
+    ).filter(
+        Order.created_at >= start_dt, 
+        Order.created_at <= end_dt,
+        Order.status == 'completed'
+    ).group_by(extract('hour', Order.created_at))\
+     .order_by(extract('hour', Order.created_at))
+    
+    # Initialize hourly data structure (0-23 hours)
+    hourly_sales_dict = {hour: {'orders': 0, 'sales': 0.0} for hour in range(24)}
+    for h in hourly_sales_query.all():
+        if h.hour is not None: # Ensure hour is not null
+            hourly_sales_dict[int(h.hour)] = {'orders': h.order_count, 'sales': float(h.total_sales or 0)}
+            
+    # Convert dict to list format suitable for charts
+    hourly_sales = [{'hour': hour, 'orders': data['orders'], 'sales': data['sales']} for hour, data in hourly_sales_dict.items()]
+    # --- End Hourly Sales Data ---
 
     # --- Assemble Response ---
     report_data = {
@@ -624,7 +646,7 @@ def generate_report_data():
         'payment_methods': payment_methods,
         'staff_performance': staff_performance,
         'sales_trend': sales_trend,
-        # Add other data sections based on report_type
+        'hourly_sales': hourly_sales, # Add hourly data to response
     }
 
     return jsonify({'success': True, 'data': report_data})
