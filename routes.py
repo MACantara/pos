@@ -18,7 +18,10 @@ def load_user(user_id):
 @routes.route('/')
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for('routes.dashboard'))
+        if current_user.role == 'cashier':
+            return redirect(url_for('routes.new_order'))
+        else:
+            return redirect(url_for('routes.dashboard'))
     return redirect(url_for('routes.login'))
 
 @routes.route('/login', methods=['GET', 'POST'])
@@ -34,8 +37,13 @@ def login():
         
         if user and check_password_hash(user.password, password):
             login_user(user)
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('routes.dashboard'))
+            flash('Login successful!', 'success')
+            
+            # Redirect cashiers directly to the POS screen
+            if user.role == 'cashier':
+                return redirect(url_for('routes.new_order'))
+            else:
+                return redirect(url_for('routes.dashboard'))
         else:
             flash('Login failed. Check username and password.', 'danger')
             
@@ -45,11 +53,23 @@ def login():
 @login_required
 def logout():
     logout_user()
+    flash('You have been logged out', 'success')
     return redirect(url_for('routes.login'))
+
+@routes.before_request
+def restrict_cashier_access():
+    if current_user.is_authenticated and current_user.role == 'cashier':
+        allowed_routes = ['routes.new_order', 'routes.logout', 'static']
+        
+        if request.endpoint not in allowed_routes and not request.endpoint.startswith('static'):
+            return redirect(url_for('routes.new_order'))
 
 @routes.route('/dashboard')
 @login_required
 def dashboard():
+    if current_user.role == 'cashier':
+        return redirect(url_for('routes.new_order'))
+        
     # Get today's orders
     today = datetime.today().date()
     today_orders = Order.query.filter(db.func.date(Order.created_at) == today).all()

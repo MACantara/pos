@@ -1,190 +1,291 @@
 {% extends "base.html" %}
 
-{% block title %}New Order{% endblock %}
+{% block title %}POS - New Order{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-6">New Order</h1>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Menu Categories and Products -->
-    <div class="lg:col-span-2">
-        <div class="bg-white rounded-lg shadow p-6">
-            <!-- Order Type Selection -->
-            <div class="mb-6">
-                <h2 class="text-xl font-bold mb-3">Order Type</h2>
-                <div class="flex space-x-4">
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="orderType" value="dine-in" checked class="form-radio text-red-700">
-                        <span class="ml-2">Dine-in</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="orderType" value="take-out" class="form-radio text-red-700">
-                        <span class="ml-2">Take-out</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="orderType" value="delivery" class="form-radio text-red-700">
-                        <span class="ml-2">Delivery</span>
-                    </label>
-                </div>
-            </div>
-            
-            <!-- Categories Tabs -->
-            <div class="mb-6">
-                <div class="border-b border-gray-200">
-                    <nav class="-mb-px flex space-x-8">
-                        <button class="category-tab py-2 px-1 border-b-2 border-red-700 text-red-700 font-medium" data-category="all">All Items</button>
-                        {% for category in categories %}
-                            <button class="category-tab py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-category="{{ category.id }}">{{ category.name }}</button>
-                        {% endfor %}
-                    </nav>
-                </div>
-            </div>
-            
-            <!-- Products Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="products-grid">
-                {% for product in products %}
-                    <div class="product-item border rounded-lg overflow-hidden hover:shadow-md cursor-pointer" 
-                         data-id="{{ product.id }}" 
-                         data-name="{{ product.name }}" 
-                         data-price="{{ product.price }}"
-                         data-category="{{ product.category_id }}">
-                        <div class="h-32 bg-gray-200 relative">
-                            <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-                            {% if not product.available %}
-                                <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                    <span class="text-white font-bold">Out of Stock</span>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="p-2">
-                            <h3 class="font-semibold truncate">{{ product.name }}</h3>
-                            <p class="text-red-700">₱{{ "{:,.2f}".format(product.price) }}</p>
-                        </div>
-                    </div>
-                {% endfor %}
+<div class="flex flex-col h-screen bg-gray-100">
+    <!-- Header with user info and logout -->
+    <header class="bg-red-700 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Tokyo Tokyo POS</h1>
+            <div class="flex items-center space-x-4">
+                <span>{{ current_user.name }} ({{ current_user.role }})</span>
+                <a href="{{ url_for('routes.logout') }}" class="bg-white text-red-700 py-2 px-4 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </a>
             </div>
         </div>
-    </div>
-    
-    <!-- Order Summary -->
-    <div class="lg:col-span-1">
-        <div class="bg-white rounded-lg shadow p-6 sticky top-6">
-            <h2 class="text-xl font-bold mb-4">Current Order</h2>
-            
-            <!-- Order Items -->
-            <div class="space-y-3 mb-6 max-h-96 overflow-y-auto" id="order-items">
-                <p class="text-gray-500 text-center py-4" id="empty-cart-message">No items added</p>
-            </div>
-            
-            <!-- Order Summary -->
-            <div class="border-t pt-4 space-y-2">
-                <div class="flex justify-between">
-                    <span>Subtotal</span>
-                    <span id="subtotal">₱0.00</span>
+    </header>
+
+    <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
+        <!-- Menu Categories and Products - Left/Top Section -->
+        <div class="w-full md:w-2/3 flex flex-col overflow-hidden">
+            <!-- Order Type Selection -->
+            <div class="bg-white p-4 shadow-sm">
+                <h2 class="text-xl font-bold mb-3">Order Type</h2>
+                <div class="flex flex-wrap gap-2">
+                    <label class="flex-grow">
+                        <input type="radio" name="orderType" value="dine-in" checked class="hidden">
+                        <div class="text-center py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg border-2 cursor-pointer order-type-option selected">
+                            <i class="fas fa-utensils text-2xl mb-1"></i>
+                            <p>Dine-in</p>
+                        </div>
+                    </label>
+                    <label class="flex-grow">
+                        <input type="radio" name="orderType" value="take-out" class="hidden">
+                        <div class="text-center py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg border-2 cursor-pointer order-type-option">
+                            <i class="fas fa-shopping-bag text-2xl mb-1"></i>
+                            <p>Take-out</p>
+                        </div>
+                    </label>
+                    <label class="flex-grow">
+                        <input type="radio" name="orderType" value="delivery" class="hidden">
+                        <div class="text-center py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg border-2 cursor-pointer order-type-option">
+                            <i class="fas fa-motorcycle text-2xl mb-1"></i>
+                            <p>Delivery</p>
+                        </div>
+                    </label>
                 </div>
-                <div class="flex justify-between">
-                    <span>Tax (12%)</span>
-                    <span id="tax">₱0.00</span>
+            </div>
+            
+            <!-- Categories Tabs - Scrollable horizontally on mobile -->
+            <div class="bg-white shadow-sm">
+                <div class="overflow-x-auto">
+                    <div class="flex p-2 min-w-max">
+                        <button class="category-tab py-3 px-6 mx-1 rounded-lg bg-red-700 text-white font-medium text-lg" data-category="all">All Items</button>
+                        {% for category in categories %}
+                            <button class="category-tab py-3 px-6 mx-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-lg" data-category="{{ category.id }}">{{ category.name }}</button>
+                        {% endfor %}
+                    </div>
                 </div>
-                <div class="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span id="total">₱0.00</span>
+            </div>
+            
+            <!-- Products Grid - Scrollable -->
+            <div class="flex-grow overflow-y-auto p-4">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="products-grid">
+                    {% for product in products %}
+                        <div class="product-item bg-white rounded-lg shadow hover:shadow-lg cursor-pointer transition-all transform hover:scale-105" 
+                             data-id="{{ product.id }}" 
+                             data-name="{{ product.name }}" 
+                             data-price="{{ product.price }}"
+                             data-category="{{ product.category_id }}">
+                            <div class="h-32 bg-gray-200 rounded-t-lg relative">
+                                <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="w-full h-full object-cover rounded-t-lg">
+                                {% if not product.available %}
+                                    <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-t-lg">
+                                        <span class="text-white font-bold">Out of Stock</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="p-3">
+                                <h3 class="font-semibold truncate">{{ product.name }}</h3>
+                                <p class="text-red-700 font-bold">₱{{ "{:,.2f}".format(product.price) }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
-            
-            <!-- Payment Method -->
-            <div class="my-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="payment-method">Payment Method</label>
-                <select id="payment-method" class="form-select block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
-                    <option value="cash">Cash</option>
-                    <option value="card">Credit/Debit Card</option>
-                    <option value="gcash">GCash</option>
-                    <option value="paymaya">PayMaya</option>
-                </select>
+        </div>
+        
+        <!-- Order Summary - Right/Bottom Section -->
+        <div class="w-full md:w-1/3 bg-white shadow-lg overflow-hidden flex flex-col">
+            <div class="p-4 bg-gray-50 border-b-2 border-gray-200">
+                <h2 class="text-xl font-bold">Current Order</h2>
             </div>
             
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-2 gap-4">
-                <button id="clear-order" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400">
-                    Clear
-                </button>
-                <button id="place-order" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                    Place Order
-                </button>
+            <!-- Order Items - Scrollable -->
+            <div class="flex-grow overflow-y-auto p-4" id="order-items">
+                <p class="text-gray-500 text-center py-8" id="empty-cart-message">No items added</p>
             </div>
             
-            <!-- Additional Options -->
-            <div class="mt-6 space-y-3">
-                <button class="text-sm text-gray-600 hover:text-red-700 w-full text-left">
-                    <i class="fas fa-user-plus mr-2"></i> Add Customer
-                </button>
-                <button class="text-sm text-gray-600 hover:text-red-700 w-full text-left">
-                    <i class="fas fa-receipt mr-2"></i> Apply Promo Code
-                </button>
-                <button class="text-sm text-gray-600 hover:text-red-700 w-full text-left">
-                    <i class="fas fa-qrcode mr-2"></i> Scan Rewards Card
-                </button>
+            <!-- Order Summary and Actions -->
+            <div class="p-4 border-t-2 border-gray-200">
+                <!-- Order Summary -->
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between">
+                        <span>Subtotal</span>
+                        <span id="subtotal">₱0.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Tax (12%)</span>
+                        <span id="tax">₱0.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold">
+                        <span>Total</span>
+                        <span id="total">₱0.00</span>
+                    </div>
+                </div>
+                
+                <!-- Payment Method -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="payment-method">Payment Method</label>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <label class="payment-method-option">
+                            <input type="radio" name="paymentMethod" value="cash" checked class="hidden">
+                            <div class="text-center py-3 bg-gray-100 hover:bg-gray-200 rounded-lg border-2 cursor-pointer selected">
+                                <i class="fas fa-money-bill-wave text-xl"></i>
+                                <p>Cash</p>
+                            </div>
+                        </label>
+                        <label class="payment-method-option">
+                            <input type="radio" name="paymentMethod" value="card" class="hidden">
+                            <div class="text-center py-3 bg-gray-100 hover:bg-gray-200 rounded-lg border-2 cursor-pointer">
+                                <i class="fas fa-credit-card text-xl"></i>
+                                <p>Card</p>
+                            </div>
+                        </label>
+                        <label class="payment-method-option">
+                            <input type="radio" name="paymentMethod" value="gcash" class="hidden">
+                            <div class="text-center py-3 bg-gray-100 hover:bg-gray-200 rounded-lg border-2 cursor-pointer">
+                                <i class="fas fa-wallet text-xl"></i>
+                                <p>GCash</p>
+                            </div>
+                        </label>
+                        <label class="payment-method-option">
+                            <input type="radio" name="paymentMethod" value="paymaya" class="hidden">
+                            <div class="text-center py-3 bg-gray-100 hover:bg-gray-200 rounded-lg border-2 cursor-pointer">
+                                <i class="fas fa-mobile-alt text-xl"></i>
+                                <p>PayMaya</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="clear-order" class="bg-gray-300 text-gray-800 py-4 px-4 rounded-lg text-lg font-bold hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        <i class="fas fa-trash-alt mr-2"></i>Clear
+                    </button>
+                    <button id="place-order" class="bg-red-700 text-white py-4 px-4 rounded-lg text-lg font-bold hover:bg-red-800 disabled:bg-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500" disabled>
+                        <i class="fas fa-check-circle mr-2"></i>Pay
+                    </button>
+                </div>
+                
+                <!-- Additional Options -->
+                <div class="grid grid-cols-1 gap-2 mt-4">
+                    <button id="add-customer-btn" class="w-full text-left p-3 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center">
+                        <i class="fas fa-user-plus text-red-700 mr-3 text-lg"></i>
+                        <span>Add Customer</span>
+                    </button>
+                    <button id="apply-promo-btn" class="w-full text-left p-3 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center">
+                        <i class="fas fa-tag text-red-700 mr-3 text-lg"></i>
+                        <span>Apply Promo Code</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Item Customization Modal -->
-<div id="customize-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-        <div class="flex justify-between items-center mb-4">
+<!-- Item Customization Modal - Fullscreen on mobile -->
+<div id="customize-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md max-h-screen overflow-y-auto mx-4">
+        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white pb-2 border-b">
             <h2 class="text-xl font-bold" id="modal-product-name"></h2>
-            <button onclick="closeCustomizeModal()" class="text-gray-500 hover:text-gray-700">
+            <button onclick="closeCustomizeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="quantity">
+        <div class="mb-6">
+            <label class="block text-gray-700 text-lg font-bold mb-2" for="quantity">
                 Quantity
             </label>
             <div class="flex items-center">
-                <button id="decrease-quantity" class="bg-gray-200 px-3 py-1 rounded-l">
+                <button id="decrease-quantity" class="bg-gray-200 text-gray-800 px-5 py-3 rounded-l-lg text-xl font-bold">
                     <i class="fas fa-minus"></i>
                 </button>
-                <input id="quantity" type="number" value="1" min="1" class="w-16 text-center py-1 border-t border-b border-gray-300">
-                <button id="increase-quantity" class="bg-gray-200 px-3 py-1 rounded-r">
+                <input id="quantity" type="number" value="1" min="1" class="w-20 text-center py-3 text-xl border-t border-b border-gray-300">
+                <button id="increase-quantity" class="bg-gray-200 text-gray-800 px-5 py-3 rounded-r-lg text-xl font-bold">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
         </div>
         
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="notes">
+        <div class="mb-6">
+            <label class="block text-gray-700 text-lg font-bold mb-2" for="notes">
                 Special Instructions
             </label>
-            <textarea id="notes" class="w-full px-3 py-2 border rounded-md"></textarea>
+            <textarea id="notes" class="w-full px-3 py-2 border rounded-md text-lg" rows="2"></textarea>
         </div>
         
-        <div id="modal-addons" class="mb-4">
-            <h3 class="font-bold text-sm mb-2">Add-ons</h3>
-            <div class="space-y-2">
-                <div class="flex items-center justify-between">
+        <div id="modal-addons" class="mb-6">
+            <h3 class="font-bold text-lg mb-3">Add-ons</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <label class="inline-flex items-center">
-                        <input type="checkbox" class="form-checkbox text-red-700">
-                        <span class="ml-2">Extra Rice</span>
+                        <input type="checkbox" class="form-checkbox text-red-700 h-5 w-5">
+                        <span class="ml-3 text-lg">Extra Rice</span>
                     </label>
-                    <span>₱30.00</span>
+                    <span class="font-bold">₱30.00</span>
                 </div>
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <label class="inline-flex items-center">
-                        <input type="checkbox" class="form-checkbox text-red-700">
-                        <span class="ml-2">Extra Nori</span>
+                        <input type="checkbox" class="form-checkbox text-red-700 h-5 w-5">
+                        <span class="ml-3 text-lg">Extra Nori</span>
                     </label>
-                    <span>₱20.00</span>
+                    <span class="font-bold">₱20.00</span>
                 </div>
             </div>
         </div>
         
         <div class="flex justify-end">
-            <button id="add-to-order" class="bg-red-700 text-white py-2 px-4 rounded hover:bg-red-800">
+            <button id="add-to-order" class="bg-red-700 text-white py-3 px-6 rounded-lg text-lg font-bold hover:bg-red-800 w-full">
                 Add to Order
             </button>
         </div>
+    </div>
+</div>
+
+<!-- Customer Modal -->
+<div id="customer-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Add Customer</h2>
+            <button class="modal-close text-gray-500 hover:text-gray-700 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-700 text-lg font-bold mb-2" for="customer-phone">
+                Phone Number
+            </label>
+            <input id="customer-phone" type="tel" class="w-full px-3 py-3 border rounded-md text-lg" placeholder="Enter customer phone">
+        </div>
+        <div id="customer-details" class="mb-4 hidden">
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <h3 id="customer-name" class="font-bold text-lg"></h3>
+                <p id="customer-points" class="text-gray-600"></p>
+            </div>
+        </div>
+        <div class="flex space-x-3">
+            <button id="search-customer" class="bg-gray-200 text-gray-800 py-3 px-6 rounded-lg text-lg font-bold hover:bg-gray-300 flex-1">
+                Search
+            </button>
+            <button id="add-new-customer" class="bg-red-700 text-white py-3 px-6 rounded-lg text-lg font-bold hover:bg-red-800 flex-1">
+                Add New
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Promo Code Modal -->
+<div id="promo-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Apply Promo Code</h2>
+            <button class="modal-close text-gray-500 hover:text-gray-700 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mb-6">
+            <label class="block text-gray-700 text-lg font-bold mb-2" for="promo-code">
+                Enter Code
+            </label>
+            <input id="promo-code" type="text" class="w-full px-3 py-3 border rounded-md text-lg uppercase" placeholder="Enter promo code">
+        </div>
+        <button id="apply-promo" class="bg-red-700 text-white py-3 px-6 rounded-lg text-lg font-bold hover:bg-red-800 w-full">
+            Apply Code
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -195,16 +296,42 @@
     let selectedProduct = null;
     
     document.addEventListener('DOMContentLoaded', function() {
+        // Order type selection
+        document.querySelectorAll('.order-type-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.order-type-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.classList.remove('border-red-700', 'bg-red-50');
+                    opt.classList.add('border-transparent');
+                });
+                this.classList.add('selected', 'border-red-700', 'bg-red-50');
+                this.previousElementSibling.checked = true;
+            });
+        });
+        
+        // Payment method selection
+        document.querySelectorAll('.payment-method-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.payment-method-option div').forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.classList.remove('border-red-700', 'bg-red-50');
+                    opt.classList.add('border-transparent');
+                });
+                this.querySelector('div').classList.add('selected', 'border-red-700', 'bg-red-50');
+                this.querySelector('input').checked = true;
+            });
+        });
+        
         // Category switching
         document.querySelectorAll('.category-tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 // Update active tab styling
                 document.querySelectorAll('.category-tab').forEach(t => {
-                    t.classList.remove('border-red-700', 'text-red-700');
-                    t.classList.add('border-transparent', 'text-gray-500');
+                    t.classList.remove('bg-red-700', 'text-white');
+                    t.classList.add('bg-gray-100', 'text-gray-800');
                 });
-                this.classList.add('border-red-700', 'text-red-700');
-                this.classList.remove('border-transparent', 'text-gray-500');
+                this.classList.add('bg-red-700', 'text-white');
+                this.classList.remove('bg-gray-100', 'text-gray-800');
                 
                 // Filter products
                 const categoryId = this.dataset.category;
@@ -225,6 +352,23 @@
                     document.getElementById('customize-modal').classList.remove('hidden');
                 }
             });
+        });
+        
+        // Modal close buttons
+        document.querySelectorAll('.modal-close').forEach(button => {
+            button.addEventListener('click', function() {
+                this.closest('.fixed').classList.add('hidden');
+            });
+        });
+        
+        // Customer modal
+        document.getElementById('add-customer-btn').addEventListener('click', function() {
+            document.getElementById('customer-modal').classList.remove('hidden');
+        });
+        
+        // Promo code modal
+        document.getElementById('apply-promo-btn').addEventListener('click', function() {
+            document.getElementById('promo-modal').classList.remove('hidden');
         });
         
         // Quantity controls
@@ -262,14 +406,18 @@
         
         // Clear order
         document.getElementById('clear-order').addEventListener('click', function() {
-            currentOrder = [];
-            updateOrderSummary();
+            if (currentOrder.length > 0) {
+                if (confirm('Are you sure you want to clear the current order?')) {
+                    currentOrder = [];
+                    updateOrderSummary();
+                }
+            }
         });
         
         // Place order
         document.getElementById('place-order').addEventListener('click', function() {
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
-            const paymentMethod = document.getElementById('payment-method').value;
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
             
             // Calculate totals
             const subtotal = currentOrder.reduce((sum, item) => sum + item.total, 0);
@@ -291,6 +439,10 @@
                 totalAmount: total
             };
             
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
             // Send order to server
             fetch('/new-order', {
                 method: 'POST',
@@ -302,17 +454,25 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Order placed successfully!');
+                    // Show success message and reset order
+                    alert('Order #' + data.order_number + ' placed successfully!');
                     currentOrder = [];
                     updateOrderSummary();
-                    // Redirect to orders page
-                    window.location.href = '/orders';
                 } else {
-                    alert('Failed to place order');
+                    alert('Failed to place order: ' + data.message);
                 }
+                
+                // Reset button
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Pay';
             })
             .catch(error => {
                 alert('An error occurred while placing the order');
+                console.error('Error:', error);
+                
+                // Reset button
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Pay';
             });
         });
     });
@@ -342,24 +502,26 @@
         const placeOrderButton = document.getElementById('place-order');
         
         if (currentOrder.length === 0) {
-            orderItemsContainer.innerHTML = '<p class="text-gray-500 text-center py-4" id="empty-cart-message">No items added</p>';
+            orderItemsContainer.innerHTML = '<p class="text-gray-500 text-center py-8" id="empty-cart-message">No items added</p>';
             placeOrderButton.disabled = true;
         } else {
             let html = '';
             
             currentOrder.forEach((item, index) => {
                 html += `
-                    <div class="flex justify-between items-start border-b pb-2">
-                        <div>
+                    <div class="flex justify-between items-start p-3 border-b">
+                        <div class="flex-grow">
                             <div class="flex items-center">
-                                <span class="font-semibold">${item.quantity}x</span>
-                                <span class="ml-2">${item.name}</span>
+                                <span class="font-bold text-lg mr-2">${item.quantity}x</span>
+                                <span class="text-lg">${item.name}</span>
                             </div>
-                            <p class="text-sm text-gray-500">${item.notes || 'No special instructions'}</p>
+                            <p class="text-sm text-gray-500 mt-1">${item.notes || 'No special instructions'}</p>
                         </div>
-                        <div class="text-right">
-                            <p>₱${item.total.toFixed(2)}</p>
-                            <button class="text-xs text-red-700" onclick="removeOrderItem(${index})">Remove</button>
+                        <div class="text-right ml-4">
+                            <p class="font-bold">₱${item.total.toFixed(2)}</p>
+                            <button class="text-red-600 hover:text-red-800 mt-1" onclick="removeOrderItem(${index})">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
                         </div>
                     </div>
                 `;
@@ -384,4 +546,35 @@
         updateOrderSummary();
     }
 </script>
+
+<style>
+/* Touch-friendly styles */
+.order-type-option.selected, .payment-method-option div.selected {
+    border-color: rgb(185, 28, 28);
+    background-color: rgb(254, 242, 242);
+}
+
+/* Prevent text selection on touch interfaces */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+/* Ensure touch targets are large enough */
+button, .product-item, input[type="radio"] + div, .category-tab {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Make inputs touch-friendly */
+input, select, textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+}
+
+/* Fix mobile scrolling */
+.overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+}
+</style>
 {% endblock %}
