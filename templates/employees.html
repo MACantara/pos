@@ -234,7 +234,7 @@
             document.getElementById('employee-modal-title').textContent = 'Add Employee';
             document.getElementById('employee-form').reset();
             document.getElementById('employee-id').value = '';
-            document.getElementById('password-fields').style.display = 'block';
+            document.getElementById('password-fields').style.display = 'block'; // Show password for new employee
             document.getElementById('employee-modal').classList.remove('hidden');
         });
         
@@ -244,7 +244,7 @@
                 const employeeId = this.dataset.id;
                 
                 // Fetch employee details
-                fetch(`/api/employees/${employeeId}`)
+                fetch(`/api/employees/${employeeId}`) // Use API endpoint
                     .then(response => response.json())
                     .then(employee => {
                         document.getElementById('employee-modal-title').textContent = 'Edit Employee';
@@ -252,11 +252,12 @@
                         document.getElementById('employee-name').value = employee.name;
                         document.getElementById('employee-username').value = employee.username;
                         document.getElementById('employee-role').value = employee.role;
-                        document.getElementById('password-fields').style.display = 'none';
+                        document.getElementById('password-fields').style.display = 'none'; // Hide password for edit
                         
                         document.getElementById('employee-modal').classList.remove('hidden');
                     })
                     .catch(error => {
+                        console.error('Error loading employee details:', error);
                         alert('Error loading employee details');
                     });
             });
@@ -283,7 +284,7 @@
                     const employeeId = this.dataset.id;
                     
                     // Delete request
-                    fetch(`/api/employees/${employeeId}`, {
+                    fetch(`/api/employees/${employeeId}`, { // Use API endpoint
                         method: 'DELETE'
                     })
                     .then(response => response.json())
@@ -296,6 +297,7 @@
                         }
                     })
                     .catch(error => {
+                        console.error('Error deleting employee:', error);
                         alert('An error occurred');
                     });
                 }
@@ -309,7 +311,7 @@
             const employeeId = document.getElementById('employee-id').value;
             
             // Send to server
-            fetch(`/api/employees${employeeId ? '/' + employeeId : ''}`, {
+            fetch(`/api/employees${employeeId ? '/' + employeeId : ''}`, { // Use API endpoint
                 method: employeeId ? 'PUT' : 'POST',
                 body: formData
             })
@@ -323,6 +325,7 @@
                 }
             })
             .catch(error => {
+                console.error('Error saving employee:', error);
                 alert('An error occurred');
             });
         });
@@ -345,7 +348,7 @@
             formData.append('password', password);
             
             // Send to server
-            fetch(`/api/employees/${employeeId}/reset-password`, {
+            fetch(`/api/employees/${employeeId}/reset-password`, { // Use API endpoint
                 method: 'POST',
                 body: formData
             })
@@ -359,6 +362,7 @@
                 }
             })
             .catch(error => {
+                console.error('Error resetting password:', error);
                 alert('An error occurred');
             });
         });

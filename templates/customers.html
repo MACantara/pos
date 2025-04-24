@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}Customer Management{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-4">
@@ -121,17 +123,20 @@
     </div>
 </div>
 
+{% block scripts %}
 <script>
+    const today = new Date("{{ today.isoformat() }}"); // Get today's date from backend
+
     document.addEventListener('DOMContentLoaded', function() {
         // Add customer button
         document.getElementById('add-customer-btn').addEventListener('click', function() {
             document.getElementById('customer-modal-title').textContent = 'Add Customer';
             document.getElementById('customer-form').reset();
             document.getElementById('customer-id').value = '';
-            document.getElementById('points-field').style.display = 'block';
+            document.getElementById('rewards-points-field').style.display = 'block'; // Show points field for new customer
             document.getElementById('customer-modal').classList.remove('hidden');
         });
-        
+
         // Edit customer buttons
         document.querySelectorAll('.edit-customer').forEach(button => {
             button.addEventListener('click', function() {
@@ -144,11 +149,10 @@
                         document.getElementById('customer-modal-title').textContent = 'Edit Customer';
                         document.getElementById('customer-id').value = customer.id;
                         document.getElementById('customer-name').value = customer.name;
-                        document.getElementById('customer-phone').value = customer.phone;
+                        document.getElementById('customer-phone').value = customer.phone || '';
                         document.getElementById('customer-email').value = customer.email || '';
                         document.getElementById('customer-birthday').value = customer.birthday || '';
-                        document.getElementById('customer-points').value = customer.rewards_points;
-                        document.getElementById('points-field').style.display = 'none';
+                        document.getElementById('rewards-points-field').style.display = 'none'; // Hide points field when editing
                         
                         document.getElementById('customer-modal').classList.remove('hidden');
                     })
@@ -158,7 +162,7 @@
             });
         });
         
-        // View customer details
+        // View customer buttons
         document.querySelectorAll('.view-customer').forEach(button => {
             button.addEventListener('click', function() {
                 const customerId = this.dataset.id;
@@ -169,51 +173,25 @@
                     .then(customer => {
                         document.getElementById('view-customer-name').textContent = customer.name;
                         
-                        // Format customer details
-                        let details = `
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-sm text-gray-600">Phone</p>
-                                    <p>${customer.phone || 'Not provided'}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-600">Email</p>
-                                    <p>${customer.email || 'Not provided'}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-600">Birthday</p>
-                                    <p>${customer.birthday || 'Not provided'}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-600">Rewards Points</p>
-                                    <p class="flex items-center">
-                                        <span class="text-yellow-500 mr-1"><i class="fas fa-star"></i></span>
-                                        ${customer.rewards_points} points
-                                    </p>
-                                </div>
-                            </div>
+                        let detailsHtml = `
+                            <p><strong>Phone:</strong> ${customer.phone || 'N/A'}</p>
+                            <p><strong>Email:</strong> ${customer.email || 'N/A'}</p>
+                            <p><strong>Birthday:</strong> ${customer.birthday ? new Date(customer.birthday).toLocaleDateString() : 'N/A'}</p>
+                            <p><strong>Rewards Points:</strong> ${customer.rewards_points}</p>
+                            <h3 class="font-bold mt-4 mb-2">Recent Orders</h3>
                         `;
                         
-                        document.getElementById('customer-details').innerHTML = details;
-                        
-                        // Format purchase history
                         if (customer.orders && customer.orders.length > 0) {
-                            let historyHTML = '';
+                            detailsHtml += '<ul class="list-disc pl-5">';
                             customer.orders.forEach(order => {
-                                historyHTML += `
-                                    <tr>
-                                        <td class="py-2 px-4 border-b">${new Date(order.created_at).toLocaleDateString()}</td>
-                                        <td class="py-2 px-4 border-b">${order.order_number}</td>
-                                        <td class="py-2 px-4 border-b text-right">₱${order.total_amount.toFixed(2)}</td>
-                                        <td class="py-2 px-4 border-b text-right">+${Math.floor(order.total_amount / 100)}</td>
-                                    </tr>
-                                `;
+                                detailsHtml += `<li>${new Date(order.created_at).toLocaleDateString()} - Order #${order.order_number} (₱${order.total_amount.toFixed(2)})</li>`;
                             });
-                            document.getElementById('purchase-history').innerHTML = historyHTML;
+                            detailsHtml += '</ul>';
                         } else {
-                            document.getElementById('purchase-history').innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">No purchase history available</td></tr>';
+                            detailsHtml += '<p class="text-gray-500">No recent orders.</p>';
                         }
                         
+                        document.getElementById('view-customer-content').innerHTML = detailsHtml;
                         document.getElementById('view-customer-modal').classList.remove('hidden');
                     })
                     .catch(error => {
@@ -222,26 +200,13 @@
             });
         });
         
-        // Add points to customer
+        // Add points buttons
         document.querySelectorAll('.add-points').forEach(button => {
             button.addEventListener('click', function() {
-                const customerId = this.dataset.id;
-                const customerName = this.dataset.name;
-                
-                // Fetch current points
-                fetch(`/api/customers/${customerId}`)
-                    .then(response => response.json())
-                    .then(customer => {
-                        document.getElementById('points-customer-id').value = customerId;
-                        document.getElementById('customer-name-display').textContent = customerName;
-                        document.getElementById('current-points').textContent = customer.rewards_points;
-                        document.getElementById('points-form').reset();
-                        document.getElementById('points-to-add').value = 1;
-                        document.getElementById('points-modal').classList.remove('hidden');
-                    })
-                    .catch(error => {
-                        alert('Error loading customer details');
-                    });
+                document.getElementById('points-customer-id').value = this.dataset.id;
+                document.getElementById('points-customer-name').textContent = this.dataset.name;
+                document.getElementById('points-form').reset();
+                document.getElementById('points-modal').classList.remove('hidden');
             });
         });
         
@@ -294,44 +259,18 @@
             });
         });
         
-        // Scan QR code button
-        document.getElementById('scan-qr').addEventListener('click', function() {
-            // In a real app, this would access the camera to scan a QR code
-            alert('QR code scanning would be implemented here');
-        });
-        
-        // Search functionality
-        document.getElementById('search-customers').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#customers-table-body tr');
-            
-            rows.forEach(row => {
-                const name = row.cells[0].textContent.toLowerCase();
-                const contact = row.cells[1].textContent.toLowerCase();
-                
-                if (name.includes(searchTerm) || contact.includes(searchTerm)) {
-                    row.classList.remove('hidden');
-                } else {
-                    row.classList.add('hidden');
-                }
-            });
-        });
-        
         // Send birthday promo buttons
         document.querySelectorAll('.send-promo').forEach(button => {
             button.addEventListener('click', function() {
                 const customerId = this.dataset.id;
                 
-                // Send to server
                 fetch(`/api/customers/${customerId}/birthday-promo`, {
                     method: 'POST'
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Birthday promotion sent successfully!');
-                        this.disabled = true;
-                        this.textContent = 'Sent';
+                        alert(data.message || 'Birthday promo sent!');
                     } else {
                         alert('Error: ' + data.message);
                     }
@@ -341,18 +280,37 @@
                 });
             });
         });
+        
+        // Search functionality
+        document.getElementById('search-customers').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#customers-table-body tr');
+            
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const phone = row.cells[1].textContent.toLowerCase();
+                const email = row.cells[2].textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || phone.includes(searchTerm) || email.includes(searchTerm)) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        });
     });
     
     function closeCustomerModal() {
         document.getElementById('customer-modal').classList.add('hidden');
     }
     
+    function closeViewCustomerModal() {
+        document.getElementById('view-customer-modal').classList.add('hidden');
+    }
+    
     function closePointsModal() {
         document.getElementById('points-modal').classList.add('hidden');
     }
-    
-    function closeViewModal() {
-        document.getElementById('view-customer-modal').classList.add('hidden');
-    }
 </script>
+{% endblock %}
 {% endblock %}

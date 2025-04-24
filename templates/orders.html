@@ -168,8 +168,8 @@
     }
     
     function printReceipt(orderId) {
-        // In a real app, this would generate and print a receipt
-        window.open(`/orders/${orderId}/receipt`, '_blank');
+        // Open the receipt page in a new tab
+        window.open("{{ url_for('orders.view_receipt', order_id=0) }}".replace('0', orderId), '_blank');
     }
 </script>
 {% endblock %}

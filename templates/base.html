@@ -30,49 +30,49 @@
         <nav>
             <ul class="space-y-2">
                 <li>
-                    <a href="{{ url_for('routes.dashboard') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.dashboard' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('dashboard.view') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'dashboard.view' %}bg-red-600{% endif %}">
                         <i class="fas fa-chart-line mr-2"></i> Dashboard
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.orders') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.orders' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('orders.list_orders') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'orders.list_orders' %}bg-red-600{% endif %}">
                         <i class="fas fa-shopping-cart mr-2"></i> Orders
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.new_order') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.new_order' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('pos.new_order') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'pos.new_order' %}bg-red-600{% endif %}">
                         <i class="fas fa-plus-circle mr-2"></i> New Order
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.menu') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.menu' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('menu.view_menu') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'menu.view_menu' %}bg-red-600{% endif %}">
                         <i class="fas fa-utensils mr-2"></i> Menu
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.inventory') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.inventory' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('inventory.view_inventory') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'inventory.view_inventory' %}bg-red-600{% endif %}">
                         <i class="fas fa-boxes mr-2"></i> Inventory
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.reports') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.reports' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('reports.view_reports') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'reports.view_reports' %}bg-red-600{% endif %}">
                         <i class="fas fa-chart-bar mr-2"></i> Reports
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.employees') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.employees' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('employees.view_employees') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'employees.view_employees' %}bg-red-600{% endif %}">
                         <i class="fas fa-users mr-2"></i> Employees
                     </a>
                 </li>
                 {% if current_user.role == 'manager' %}
                 <li>
-                    <a href="{{ url_for('routes.customers') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'routes.customers' %}bg-red-600{% endif %}">
+                    <a href="{{ url_for('customers.view_customers') }}" class="block p-3 rounded hover:bg-red-600 {% if request.endpoint == 'customers.view_customers' %}bg-red-600{% endif %}">
                         <i class="fas fa-user-friends mr-2"></i> Customers
                     </a>
                 </li>
                 {% endif %}
                 <li class="mt-8">
-                    <a href="{{ url_for('routes.logout') }}" class="block p-3 rounded hover:bg-red-600">
+                    <a href="{{ url_for('auth.logout') }}" class="block p-3 rounded hover:bg-red-600">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </a>
                 </li>
