@@ -82,17 +82,7 @@
     {% endif %}
     
     <!-- Content Area -->
-    <div class="{% if current_user.is_authenticated and current_user.role != 'cashier' %}content-area{% endif %}">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert bg-{{ 'green' if category == 'success' else 'red' }}-100 border-l-4 border-{{ 'green' if category == 'success' else 'red' }}-500 text-{{ 'green' if category == 'success' else 'red' }}-700 p-4 mb-4">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
+    <div class="{% if current_user.is_authenticated and current_user.role != 'cashier' %}content-area{% endif %}">       
         {% block content %}{% endblock %}
     </div>
     
