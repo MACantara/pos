@@ -82,7 +82,7 @@
     {% endif %}
     
     <!-- Content Area -->
-    <div class="{% if current_user.is_authenticated %}content-area{% endif %} p-6">
+    <div class="{% if current_user.is_authenticated %}content-area{% endif %}">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
