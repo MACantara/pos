@@ -3,9 +3,9 @@ import uuid
 from datetime import datetime, timedelta, date
 from werkzeug.security import generate_password_hash
 
-# Assuming your Flask app instance is created in 'app.py'
-# and extensions (like db) are initialized there or in 'extensions.py'
-from app import app, db
+# Import db directly from extensions instead of from app
+from extensions import db
+# Import models directly
 from models import User, Supplier, Category, Product, Ingredient, ProductIngredient, Customer, Order, OrderItem, InventoryLog
 
 def clear_data():
@@ -310,11 +310,3 @@ def seed_data():
         print(f"An error occurred during seeding: {e}")
         import traceback
         traceback.print_exc()
-
-if __name__ == '__main__':
-    with app.app_context():
-        # Optional: Clear data before seeding. Be careful with this in production!
-        clear_data()
-        
-        # Run the seeding logic (which now includes default user checks)
-        seed_data()

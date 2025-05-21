@@ -91,13 +91,12 @@ with app.app_context():
     # Create tables
     db.create_all()
     
-    # Optional: Seed initial data (Categories, etc.)
-    if not Category.query.first():
-        print("Seeding initial categories...")
-        categories_to_add = ['Ramen', 'Bento', 'Donburi', 'Sushi/Maki', 'Sides', 'Desserts', 'Drinks']
-        for cat_name in categories_to_add:
-            db.session.add(Category(name=cat_name))
-        print("Categories seeded.")
+    # Import seed functions here (after app is created) to avoid circular imports
+    from seed_data import clear_data, seed_data
+    
+    # Clear existing data and seed new data
+    clear_data()
+    seed_data()
 
     try:
         db.session.commit()
